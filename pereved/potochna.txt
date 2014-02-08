@@ -1,0 +1,17 @@
+if (d1==66){vid->Cells[1+ak][o]=4;}
+if (d1==69){vid->Cells[1+ak][o]=4.5;}
+if (d1==72) {vid->Cells[1+ak][o]=5;}
+if (d1==75){vid->Cells[1+ak][o]=5.5;}
+if (d1==78) {vid->Cells[1+ak][o]=6;}
+if (d1==81){vid->Cells[1+ak][o]=6.5;}
+if (d1==84) {vid->Cells[1+ak][o]=7;}
+if (d1==87){vid->Cells[1+ak][o]=7.5;}
+if (d1==90) {vid->Cells[1+ak][o]=8;}
+if (d1==93){vid->Cells[1+ak][o]=8.5;}
+if (d1==96) {vid->Cells[1+ak][o]=9;}
+if (d1==99){vid->Cells[1+ak][o]=9.5;}
+if (d1==102) {vid->Cells[1+ak][o]=10;}
+if (d1==105){vid->Cells[1+ak][o]=10.5;}
+if (d1==108) {vid->Cells[1+ak][o]=11;}
+if (d1==111){vid->Cells[1+ak][o]=11.5;}
+if (d1>=112) {vid->Cells[1+ak][o]=12;}

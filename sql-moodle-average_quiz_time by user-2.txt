@@ -1,0 +1,64 @@
+SELECT `userid`, count(`id`), round(avg(`grade`),1) 
+FROM `mdl_quiz_grades` AS qg
+WHERE FROM_UNIXTIME(`timemodified`)>'2013-01-01 00:00:00' 
+GROUP BY `userid` order by avg(`grade`) DESC, count(`id`) DESC
+
+
+
+
+SELECT qg.userid, count(qg.id), round(avg(qg.grade),1), round(avg(qa.timefinish - qa.timestart) /60,0) as avg_quiz_time
+FROM `mdl_quiz_grades` AS qg
+INNER JOIN mdl_quiz_attempts AS qa on qg.quiz = qa.quiz
+WHERE (qg.timemodified>UNIX_TIMESTAMP('2013-01-01 00:00:00'))AND(qg.timemodified<UNIX_TIMESTAMP('2014-01-01 00:00:00')) 
+GROUP BY qg.userid 
+order by avg(qg.grade) DESC, count(qg.id) DESC
+
+SELECT qg.userid, count(qg.id), round(avg(qg.grade),1), round(avg(qa.timefinish - qa.timestart) /60,0) as avg_quiz_time
+FROM `mdl_quiz_grades` AS qg
+Left JOIN mdl_quiz_attempts AS qa on qg.quiz = qa.quiz
+WHERE (qg.timemodified>UNIX_TIMESTAMP('2013-01-01 00:00:00'))AND(qg.timemodified<UNIX_TIMESTAMP('2014-01-01 00:00:00')) 
+GROUP BY qg.userid 
+order by avg(qg.grade) DESC, count(qg.id) DESC
+
+=================================================================
+All completed attempts:
+SELECT `quiz`, `userid`, `timestart`, `timefinish`  FROM `mdl_quiz_attempts` WHERE (`state`='finished') and (`timefinish`>`timestart`)
+
+Get errorrs - too long attempts:
+SELECT `quiz`, `userid`, FROM_UNIXTIME(timestart), FROM_UNIXTIME(timefinish), round((`timefinish`-`timestart`)/60,1) as test_time  FROM `mdl_quiz_attempts` WHERE (`state`='finished') and (`timefinish`>`timestart`) and ((`timefinish`-`timestart`)/60>24) ORDER BY `test_time` DESC
+
+SELECT `quiz`, `userid`, FROM_UNIXTIME(timestart), FROM_UNIXTIME(timefinish), round((`timefinish`-`timestart`)/60,1) as test_time  
+FROM `mdl_quiz_attempts`
+INNER JOIN `mdl_quiz_grades` AS qg ON mdl_quiz_attempts.quiz=mdl_quiz_grades.quiz
+WHERE (`state`='finished') and (`timefinish`>`timestart`) and ((`timefinish`-`timestart`)/60>24) ORDER BY `test_time` DESC
+
+
+
+
+
+SELECT count(qst_att.quiz), qst_att.userid, round(avg(qst_att.timefinish - qst_att.timestart) /60,1)
+FROM 
+(SELECT quiz, userid, timestart, timefinish 
+FROM mdl_quiz_attempts 
+WHERE (state='finished')AND(timefinish>timestart))AS qst_att
+GROUP BY qst_att.userid
+
+SELECT qst_att.userid, count(qst_att.quiz), round(avg(qst_att.grade),1), round(avg(qst_att.timefinish - qst_att.timestart) /60,1)
+FROM 
+(SELECT qa.quiz, qa.userid, qa.timestart, qa.timefinish, qg.grade 
+FROM mdl_quiz_attempts AS qa
+INNER JOIN mdl_quiz_grades AS qg ON qa.quiz=qg.quiz 
+WHERE (state='finished')AND(timefinish>timestart))AS qst_att
+GROUP BY qst_att.userid
+
+
+SELECT * 
+FROM 
+(SELECT qst_att.userid, count(qst_att.quiz) AS quiz_count,  round(avg(qst_att.timefinish - qst_att.timestart) /60,1) AS quiz_avg_time
+FROM 
+(SELECT quiz, userid, timestart, timefinish 
+FROM mdl_quiz_attempts 
+WHERE (state='finished')AND(timefinish>timestart))AS qst_att
+GROUP BY qst_att.userid) AS qst_att_stat
+WHERE qst_att_stat.quiz_count > 10
+ORDER BY qst_att_stat.quiz_count, qst_att_stat.quiz_avg_time

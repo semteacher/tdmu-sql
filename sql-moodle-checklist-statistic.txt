@@ -1,0 +1,103 @@
+SELECT i.id, i.itemoptional, i.hidden, c.usertimestamp, c.teachermark, c.teacherid, c.teachertimestamp FROM mdl_checklist_item i LEFT JOIN mdl_checklist_check c ON (i.id = c.item AND c.userid = 50 ) WHERE i.checklist = ? AND i.userid=0 ORDER BY i.position;
+
+
+1=======================================================================================
+
+SELECT c.course, c.id, c.name, i.id, i.displaytext, ch.teacherid, ch.teachermark, ch.teachertimestamp, ch.oscemark, ch.oscetimestamp FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item WHERE (ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp<>0) ORDER BY c.id;
+-----------------
+work
+2========================================================================================
+SELECT c.course, u.lastname, u.firstname, i.id, i.displaytext, ch.teacherid, ch.teachermark, ch.teachertimestamp, ch.oscemark, ch.oscetimestamp FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item right join mdl_user u on ch.teacherid=u.id WHERE (ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp<>0) ORDER BY u.lastname;
+-----------------
+work
+3========================================================================================
+SELECT c.course, u.lastname, u.firstname, i.id, i.displaytext, count(ch.teachermark), ch.teachertimestamp, ch.oscemark, ch.oscetimestamp FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item right join mdl_user u on ch.teacherid=u.id WHERE (ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp<>0) group by ch.teacherid ORDER BY u.lastname;
+-----------------
+!work - count of the negative OSCE marks when MATRICUL is positive (by teacher) - dirty
+3-1========================================================================================
+SELECT c.course, u.lastname, u.firstname, count(ch.teachermark) cnt_bad FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item right join mdl_user u on ch.teacherid=u.id WHERE (ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp<>0) group by ch.teacherid ORDER BY u.lastname;
+-----------------
+!!work - count of the negative OSCE marks when MATRICUL is positive (by teacher) - minimum fields
+4========================================================================================
+SELECT c.course, u.lastname, u.firstname, i.id, i.displaytext, count(ch.teachermark), ch.teachertimestamp, ch.oscemark, ch.oscetimestamp FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item right join mdl_user u on ch.teacherid=u.id WHERE  (ch.teachermark=1)and(ch.oscetimestamp<>0) group by ch.teacherid ORDER BY u.lastname;
+-----------------
+!work - count of the positive MATRICUL (by teacher)- dirty
+4-1========================================================================================
+SELECT c.course, u.lastname, u.firstname, count(ch.teachermark) cnt_good FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item right join mdl_user u on ch.teacherid=u.id WHERE  (ch.teachermark=1)and(ch.oscetimestamp<>0) group by ch.teacherid ORDER BY u.lastname;
+-----------------
+!!work - count of the positive MATRICUL where are the OSCE marks is present(by teacher) - minimum fields
+==============================================================================================
+==============================================================================================
+SELECT q1.course, q1.lastname, q1.firstname, q1.cnt_bad, q2.cnt_good, q1.cnt_bad/q2.cnt_good FROM (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_bad FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item right join mdl_user u on ch.teacherid=u.id WHERE (ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp<>0) group by ch.teacherid ORDER BY u.lastname) q1, (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_good FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item right join mdl_user u on ch.teacherid=u.id WHERE  (ch.teachermark=1)and(ch.oscetimestamp<>0) group by ch.teacherid ORDER BY u.lastname) q2 WHERE q1.teacherid=q2.teacherid;
+/*-----------------
+!!work -all time
+==============================================================================================
+5==============================================================================================
+!!!!!!!!!!!!!!!!!!!!!!!!!==*/
+
+SELECT q1.course, q1.lastname, q1.firstname, q1.cnt_bad, q2.cnt_good, q1.cnt_bad/q2.cnt_good FROM (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_bad FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item right join mdl_user u on ch.teacherid=u.id WHERE (ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp >=UNIX_TIMESTAMP('2012-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q1, (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_good FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item right join mdl_user u on ch.teacherid=u.id WHERE  (ch.teachermark=1)and(ch.oscetimestamp >= UNIX_TIMESTAMP('2012-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q2 WHERE q1.teacherid=q2.teacherid;
+
+/*==!!!!!!!!!!!!!!!!!!!
+5-1==============================================================================================
+best: perform test - is it OSCE marks are alloved or not. Course name are displayed too.
+!!!!!!!!!!!!!!!!!!!==*/
+SELECT q1.course, mc.shortname, q1.lastname, q1.firstname, q1.cnt_bad, q2.cnt_good, q1.cnt_bad/q2.cnt_good FROM (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_bad FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item RIGHT JOIN mdl_user u on ch.teacherid=u.id WHERE (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp >=UNIX_TIMESTAMP('2012-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q1 join (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_good FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item RIGHT JOIN mdl_user u on ch.teacherid=u.id WHERE  (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscetimestamp >= UNIX_TIMESTAMP('2012-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q2 on q1.teacherid=q2.teacherid left join mdl_course mc on q1.course=mc.id;
+
+/*5-2==============================================================================================
+best: perform test - is it OSCE marks are alloved or not. Course name are displayed too.
+attention - used LEFT JOIN
+!!!!!!!!!!!!!!!!!!!==*/
+SELECT q1.course, mc.shortname, q1.lastname, q1.firstname, q1.cnt_bad, q2.cnt_good, q1.cnt_bad/q2.cnt_good FROM (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_bad FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item LEFT JOIN mdl_user u on ch.teacherid=u.id WHERE (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp >=UNIX_TIMESTAMP('2012-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q1 JOIN (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_good FROM mdl_checklist c JOIN mdl_checklist_item i ON c.id=i.checklist JOIN mdl_checklist_check ch ON i.id = ch.item LEFT JOIN mdl_user u on ch.teacherid=u.id WHERE  (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscetimestamp >= UNIX_TIMESTAMP('2012-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q2 on q1.teacherid=q2.teacherid LEFT JOIN mdl_course mc on q1.course=mc.id;
+
+/*==============================================================================================
+6==============================================================================================
+moodle custom sql notation of the 5-2
+!!!!!!!!!!!!!!!!!!!!!!!!!!!==*/
+SELECT q1.course "Код Курсу", mc.shortname "Коротка назва курсу", q1.lastname "Прізвище", q1.firstname "Ім\'я, По-батькові", q1.cnt_bad "Не склали ОСКІ", q2.cnt_good "Матрикули", round(100*q1.cnt_bad/q2.cnt_good,1) "Відсоток, %" 
+FROM (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_bad FROM prefix_checklist c JOIN prefix_checklist_item i ON c.id=i.checklist JOIN prefix_checklist_check ch ON i.id = ch.item LEFT JOIN prefix_user u on ch.teacherid=u.id WHERE (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp >=UNIX_TIMESTAMP('2012-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q1 JOIN (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_good FROM prefix_checklist c JOIN prefix_checklist_item i ON c.id=i.checklist JOIN prefix_checklist_check ch ON i.id = ch.item LEFT JOIN prefix_user u on ch.teacherid=u.id WHERE  (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscetimestamp >= UNIX_TIMESTAMP('2012-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q2 on q1.teacherid=q2.teacherid LEFT JOIN prefix_course mc on q1.course=mc.id
+
+/*6-1==============================================================================================
+moodle custom sql notation
+!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//minimum required field used in the second internal query 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!==*/
+SELECT q1.course "Код дисципл.", mc.shortname "Назва дисципліни", q1.id "Код викл.", q1.lastname "Прізвище", q1.firstname "Ім\'я, По-батькові", q1.cnt_bad "Нескладених ОСПІ/ОСКІ", q2.cnt_good "Відміток в матрикулах", round(100*q1.cnt_bad/q2.cnt_good,1) "Відсоток неспівпадіння, %" 
+FROM (SELECT c.course, u.id, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_bad FROM prefix_checklist c JOIN prefix_checklist_item i ON c.id=i.checklist JOIN prefix_checklist_check ch ON i.id = ch.item LEFT JOIN prefix_user u on ch.teacherid=u.id WHERE (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp >=UNIX_TIMESTAMP('2012-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q1 JOIN (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_good FROM prefix_checklist c JOIN prefix_checklist_item i ON c.id=i.checklist JOIN prefix_checklist_check ch ON i.id = ch.item LEFT JOIN prefix_user u on ch.teacherid=u.id WHERE  (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscetimestamp >= UNIX_TIMESTAMP('2012-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q2 on q1.teacherid=q2.teacherid LEFT JOIN prefix_course mc on q1.course=mc.id
+---------------------------------------------------------------------------------------
+by departments
+---------------------------------------------------------------------------------------
+SELECT mcc.name "Кафедра", q1.course "Код дисципл.", mc.shortname "Назва дисципліни", q1.id "Код викл.", q1.lastname "Прізвище", q1.firstname "Ім\'я, По-батькові", q1.cnt_bad "Нескладених ОСПІ/ОСКІ", q2.cnt_good "Відміток в матрикулах", round(100*q1.cnt_bad/q2.cnt_good,1) "Відсоток неспівпадіння, %" 
+FROM (SELECT c.course, u.id, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_bad FROM prefix_checklist c JOIN prefix_checklist_item i ON c.id=i.checklist JOIN prefix_checklist_check ch ON i.id = ch.item LEFT JOIN prefix_user u on ch.teacherid=u.id WHERE (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp >=UNIX_TIMESTAMP('2012-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q1 JOIN (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_good FROM prefix_checklist c JOIN prefix_checklist_item i ON c.id=i.checklist JOIN prefix_checklist_check ch ON i.id = ch.item LEFT JOIN prefix_user u on ch.teacherid=u.id WHERE  (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscetimestamp >= UNIX_TIMESTAMP('2012-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q2 on q1.teacherid=q2.teacherid LEFT JOIN prefix_course mc on q1.course=mc.id LEFT JOIN prefix_course_categories mcc on mc.category=mcc.id ORDER BY mcc.name, q1.lastname
+---------------------------------------------------------------------------------------
+updated 2013-06-12:
+-by departments
+-concated teacher first and last names
+-ordered by department and percent
+---------------------------------------------------------------------------------------
+
+SELECT mcc.name "Кафедра", q1.course "Код дисципл.", mc.shortname "Назва дисципліни", q1.id "Код", concat(q1.lastname, ' ', q1.firstname) "Прізвище, Ім\'я, По-батькові", q1.cnt_bad "Нескладених ОСПІ/ОСКІ", q2.cnt_good "Відміток в матрикулах", round(100*q1.cnt_bad/q2.cnt_good,1) vidsotok 
+FROM (SELECT c.course, u.id, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_bad FROM prefix_checklist c JOIN prefix_checklist_item i ON c.id=i.checklist JOIN prefix_checklist_check ch ON i.id = ch.item LEFT JOIN prefix_user u on ch.teacherid=u.id WHERE (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp >=UNIX_TIMESTAMP('2013-02-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q1 JOIN (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_good FROM prefix_checklist c JOIN prefix_checklist_item i ON c.id=i.checklist JOIN prefix_checklist_check ch ON i.id = ch.item LEFT JOIN prefix_user u on ch.teacherid=u.id WHERE  (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscetimestamp >= UNIX_TIMESTAMP('2013-02-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q2 on q1.teacherid=q2.teacherid LEFT JOIN prefix_course mc on q1.course=mc.id LEFT JOIN prefix_course_categories mcc on mc.category=mcc.id ORDER BY mcc.name, vidsotok
+
+---------------------------------------------------------------------------------------
+updated 2013-12-17:
+-Automatic remove HTML tags and english name (delete all contents inside brackets)
+---------------------------------------------------------------------------------------
+
+SELECT LEFT(strip_tags(mcc.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(mcc.name)))-1) as "Кафедра", q1.course "Код дисципл.", mc.shortname "Назва дисципліни", q1.id "Код", concat(q1.lastname, ' ', q1.firstname) "Прізвище, Ім\'я, По-батькові", q1.cnt_bad "Нескладених ОСПІ/ОСКІ", q2.cnt_good "Відміток в матрикулах", round(100*q1.cnt_bad/q2.cnt_good,1) vidsotok 
+FROM (SELECT c.course, u.id, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_bad FROM prefix_checklist c JOIN prefix_checklist_item i ON c.id=i.checklist JOIN prefix_checklist_check ch ON i.id = ch.item LEFT JOIN prefix_user u on ch.teacherid=u.id WHERE (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp >=UNIX_TIMESTAMP('2013-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q1 JOIN (SELECT c.course, u.lastname, u.firstname, ch.teacherid, count(ch.teachermark) cnt_good FROM prefix_checklist c JOIN prefix_checklist_item i ON c.id=i.checklist JOIN prefix_checklist_check ch ON i.id = ch.item LEFT JOIN prefix_user u on ch.teacherid=u.id WHERE  (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscetimestamp >= UNIX_TIMESTAMP('2013-09-01 00:00:00')) group by ch.teacherid ORDER BY u.lastname) q2 on q1.teacherid=q2.teacherid LEFT JOIN prefix_course mc on q1.course=mc.id LEFT JOIN prefix_course_categories mcc on mc.category=mcc.id ORDER BY mcc.name, vidsotok
+
+
+================================================================
+7---------------------------------------------------------------
+================================================================
+display course, teacher, all those matricules marks and students names that it received
+required - student id
+--------------------------
+SELECT q1.course "Код дисципл.", mc.shortname "Назва дисципліни", q1.teacherid "Код викл.", q1.lastname "Прізвище викл.", q1.firstname "Імя викл.", q1.userid "Код студ.", u1.lastname "Прізвище студ.", u1.firstname "Імя студ.", q1.teachermark "Матрикул", q1.oscemark "ОСКІ" FROM 
+(SELECT c.course, ch.teacherid, u.lastname, u.firstname, ch.userid, ch.teachermark, ch.oscemark FROM prefix_checklist c JOIN prefix_checklist_item i ON c.id=i.checklist JOIN prefix_checklist_check ch ON i.id = ch.item LEFT JOIN prefix_user u on ch.teacherid=u.id WHERE (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp >=UNIX_TIMESTAMP('2012-09-01 00:00:00'))  
+ORDER BY u.lastname) q1  LEFT JOIN prefix_course mc on q1.course=mc.id LEFT JOIN prefix_user u1 on q1.userid=u1.id where q1.teacherid=7334
+--------------------------
+display percent by department
+---------------------------
+SELECT LEFT(strip_tags(mcc.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(mcc.name)))-1) as "Кафедра", q1.cnt_bad "Нескладених ОСПІ/ОСКІ", q2.cnt_good "Відміток в матрикулах", round(100*q1.cnt_bad/q2.cnt_good,1) vidsotok 
+FROM (SELECT mc.category, count(ch.teachermark) cnt_bad FROM prefix_course mc JOIN prefix_checklist c ON c.course=mc.id JOIN prefix_checklist_item i ON c.id=i.checklist JOIN prefix_checklist_check ch ON i.id = ch.item WHERE (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscemark=-1)and(ch.oscetimestamp >=UNIX_TIMESTAMP('2013-09-01 00:00:00')) group by mc.category) q1 JOIN (SELECT mc.category, count(ch.teachermark) cnt_good FROM prefix_course mc JOIN prefix_checklist c ON c.course=mc.id JOIN prefix_checklist_item i ON c.id=i.checklist JOIN prefix_checklist_check ch ON i.id = ch.item WHERE  (c.osceallowed=1)and(ch.teachermark=1)and(ch.oscetimestamp >= UNIX_TIMESTAMP('2013-09-01 00:00:00')) group by mc.category) q2 on q1.category=q2.category LEFT JOIN prefix_course_categories mcc on q1.category=mcc.id ORDER BY mcc.name, vidsotok

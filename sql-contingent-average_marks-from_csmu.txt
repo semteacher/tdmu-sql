@@ -1,0 +1,217 @@
+Здравствуйте, Andriy.
+
+Первый запрос я переписал бы вот так:
+
+select BVI_M.VARIANTID, BVI_M.PARENTVARIANTID
+from B_VARIANT_ITEMS BVI_M
+inner join B_VARIANT_MODULE BVM -- это однозначно определяет модуль
+  on (BVM.VARIANTID = BVI_M.VARIANTID)
+inner join B_VARIANT_ITEMS BVI_V -- это вариант
+  on (BVI_V.VARIANTID = BVI_M.PARENTVARIANTID)
+where BVI_V.DISCIPLINEID = 25
+  and BVI_V.SPECIALITYID = 59
+  and BVI_V.BEGIN_EDUYEAR = 2011
+
+Второй запрос
+select BVI_M.VARIANTID, BVI_M.PARENTVARIANTID, BT.TESTLISTID
+from B_VARIANT_ITEMS BVI_M
+inner join B_VARIANT_MODULE BVM -- это однозначно определяет модуль
+  on (BVM.VARIANTID = BVI_M.VARIANTID)
+inner join B_VARIANT_ITEMS BVI_V -- это вариант
+  on (BVI_V.VARIANTID = BVI_M.PARENTVARIANTID)
+inner join B_TESTLIST BT
+  on (BT.VARIANTID = BVI_M.VARIANTID)
+where BVI_V.DISCIPLINEID = 25
+  and BVI_V.SPECIALITYID = 59
+  and BVI_V.BEGIN_EDUYEAR = 2011
+  and BT.DEPARTMENTID = 43
+  and (
+    (BT.SEMESTER in (1,2) and BT.EDUYEAR = 2011)
+    or (BT.SEMESTER = 3 and BT.EDUYEAR = 2012)
+  )
+
+Третий запрос (чтобы проверять я ввел свои параметры, исправьте соответственно на свои...):
+select
+  avg( S2T.credits_test ) avg_of_credits_test,
+  avg( S2T.credits_all ) avg_of_credits_all
+from B_VARIANT_ITEMS BVI_M
+inner join B_VARIANT_MODULE BVM -- это однозначно определяет модуль
+  on (BVM.VARIANTID = BVI_M.VARIANTID)
+inner join B_VARIANT_ITEMS BVI_V -- это вариант
+  on (BVI_V.VARIANTID = BVI_M.PARENTVARIANTID)
+inner join B_TESTLIST BT
+  on (BT.VARIANTID = BVI_M.VARIANTID)
+inner join STUDENT2TESTLIST S2T
+  on (S2T.TESTLISTID = BT.TESTLISTID)
+where BVI_V.DISCIPLINEID = 25
+  and BVI_V.SPECIALITYID = 6
+  and BVI_V.BEGIN_EDUYEAR = 2008
+  and BT.DEPARTMENTID = 1
+  and (
+    (BT.SEMESTER in (1,2) and BT.EDUYEAR = 2011)
+    or (BT.SEMESTER =3 and BT.EDUYEAR = 2012)
+  )
+
+
+Но если все то по варианту Вам не обязательно вводить...
+(На мой взгляд - избыточность входных данных)
+то проще это сделать так:
+
+select
+  avg( S2T.credits_test ) avg_of_credits_test,
+  avg( S2T.credits_all ) avg_of_credits_all
+from STUDENT2TESTLIST S2T
+inner join B_TESTLIST BT
+  on (BT.TESTLISTID = S2T.TESTLISTID)
+inner join B_VARIANT_ITEMS BVI_M -- ведомости ссылаются только на модули
+  on (BVI_M.VARIANTID = BT.VARIANTID)
+inner join B_VARIANT_ITEMS BVI_V -- это, соответственно, вариант
+  on (BVI_V.VARIANTID = BVI_M.PARENTVARIANTID)
+where BVI_V.DISCIPLINEID = 25
+  and BVI_V.SPECIALITYID = 6
+  and BT.DEPARTMENTID = 1
+  and (
+    (BT.SEMESTER in (1,2) and BT.EDUYEAR = 2011)
+    or (BT.SEMESTER =3 and BT.EDUYEAR = 2012)
+  )
+
+=================================================================
+-upd. 12-03-2013 special modification rot the Milka`s script. Include a count of the eduplan modules. 
+
+
+select DISTINCT BVI_V.VARIANTID, 
+(select count (iBVI_M.VARIANTID)
+from B_VARIANT_ITEMS iBVI_M
+inner join B_VARIANT_MODULE iBVM
+  on (iBVM.VARIANTID = iBVI_M.VARIANTID)
+inner join B_VARIANT_ITEMS iBVI_V
+  on (iBVI_V.VARIANTID = iBVI_M.PARENTVARIANTID)
+where iBVI_V.VARIANTID = BVI_V.VARIANTID
+  group by iBVI_M.PARENTVARIANTID) total_modules,
+GE.EDUYEARSTR,BT.SEMESTER,bvm.modulenum,bvm.moduletheme 
+from B_TESTLIST BT inner join B_VARIANT_ITEMS BVI_M on (BVI_M.VARIANTID = BT.VARIANTID) 
+inner join b_variant_module bvm on (BVI_M.VARIANTID = bvm.VARIANTID) 
+inner join B_VARIANT_ITEMS BVI_V on (BVI_V.VARIANTID = BVI_M.PARENTVARIANTID) 
+inner join GUIDE_EDUYEAR GE on (BT.EDUYEAR = GE.EDUYEAR) 
+where BVI_V.DISCIPLINEID = 25 
+  and BVI_V.SPECIALITYID = 6 
+  and BT.DEPARTMENTID = 43 
+order by BVI_V.VARIANTID,GE.EDUYEARSTR,BT.SEMESTER,bvm.modulenum
+=================================================================
+
+Вы писали 16 января 2013 г., 18:18:47:
+
+
+	Останнє питаннячко до Вас, шановна команда розробників.
+
+Я тут деякі дані з БД контингента вибираю запитами. Таку інфу керівництво захотіло. Банально гляньте, чи не дуже я напутав (з моєї точки зору, запити видають те, що мені треба).
+===================================
+виводить всі коди модулів варіанту дисципліни(! а не навч. плану) для вказаних:
+-року початку вивчення дисциаліни
+-коду дисципліни
+-коду спеціальності
+
+select 
+    b_variant_items.variantid,
+    b_variant_items.parentvariantid
+from b_variant_items
+where 
+   (b_variant_items.parentvariantid in
+   (
+        select 
+            vis.variantid
+        from b_variant_items vis
+        where
+           (vis.begin_eduyear = 2011)and(vis.disciplineid = 25)and(vis.specialityid = 59)
+   )
+   )
+=================================================================
+виводить всі коди відомостей
+
+select 
+    b_testlist.testlistid
+from b_testlist
+where b_testlist.variantid in
+(
+select 
+    b_variant_items.variantid
+from b_variant_items
+where 
+   (b_variant_items.parentvariantid in
+   (
+        select 
+            vis.variantid
+        from b_variant_items vis
+        where
+           (vis.begin_eduyear = 2010)and(vis.disciplineid = 25)and(vis.specialityid = 6)
+   )
+   )
+)
+and
+(b_testlist.DEPARTMENTID = 43)
+and
+(
+(
+(b_testlist.semester in (1,2))
+and
+(b_testlist.eduyear in (2011))
+)
+or
+(
+(b_testlist.semester in (3))
+and
+(b_testlist.eduyear in (2012))
+)
+)   
+=================================================================
+Повертає середній бал. Треба вказати:
+- vis.begin_eduyear - навчальний рік створення варіанту дисципліни(!)
+- vis.disciplineid  - код дисципліни (з довідника) у варіанті дисципліни
+- vis.specialityid  - код спеціальності (!на момент створення варіанту дисципліни) 
+      
+- b_testlist.DEPARTMENTID - код факультету (з довідника), по якому обробляються відомості 
+        
+- (b_testlist.semester in (1,2))and(b_testlist.eduyear in (2011))... - перелік навчальних років та семестрів, з яких треба взяти відомості
+select 
+    avg( student2testlist.credits_test ) avg_of_credits_test,
+    avg( student2testlist.credits_all ) avg_of_credits_all
+from student2testlist
+where
+  student2testlist.testlistid in
+(
+select 
+    b_testlist.testlistid
+from b_testlist
+where b_testlist.variantid in
+(
+select 
+    b_variant_items.variantid
+from b_variant_items
+where 
+   (b_variant_items.parentvariantid in
+   (
+        select 
+            vis.variantid
+        from b_variant_items vis
+        where
+           (vis.begin_eduyear = 2010)and(vis.disciplineid = 25)and(vis.specialityid = 6)
+   )
+   )
+)
+and
+(b_testlist.DEPARTMENTID = 43)
+and
+(
+(
+(b_testlist.semester in (1,2))
+and
+(b_testlist.eduyear in (2011))
+)
+or
+(
+(b_testlist.semester in (3))
+and
+(b_testlist.eduyear in (2012))
+)
+) 
+)  

@@ -1,0 +1,143 @@
+виводить всі коди модулів варіанту дисципліни(! а не навч. плану) для вказаних:
+-року початку вивчення дисциаліни
+-коду дисципліни
+-коду спеціальності
+
+select 
+    b_variant_items.variantid,
+    b_variant_items.parentvariantid
+from b_variant_items
+where 
+   (b_variant_items.parentvariantid in
+   (
+        select 
+            vis.variantid
+        from b_variant_items vis
+        where
+           (vis.begin_eduyear = 2011)and(vis.disciplineid = 25)and(vis.specialityid = 59)
+   )
+   )
+=================================================================
+виводить всі коди відомостей
+
+select 
+    b_testlist.testlistid
+from b_testlist
+where b_testlist.variantid in
+(
+select 
+    b_variant_items.variantid
+from b_variant_items
+where 
+   (b_variant_items.parentvariantid in
+   (
+        select 
+            vis.variantid
+        from b_variant_items vis
+        where
+           (vis.begin_eduyear = 2010)and(vis.disciplineid = 25)and(vis.specialityid = 6)
+   )
+   )
+)
+and
+(b_testlist.DEPARTMENTID = 43)
+and
+(
+(
+(b_testlist.semester in (1,2))
+and
+(b_testlist.eduyear in (2011))
+)
+or
+(
+(b_testlist.semester in (3))
+and
+(b_testlist.eduyear in (2012))
+)
+)   
+=================================================================
+Повертає середній бал. Треба вказати:
+- vis.begin_eduyear - навчальний рік створення варіанту дисципліни(!)
+- vis.disciplineid  - код дисципліни (з довідника) у варіанті дисципліни
+        12 історія України
+        718 - медична хімія
+        25 - анатомія
+        127 - мікробіологія
+        51 - гістологія
+        308 - філософія
+        1584 - медицина надзв. сит.
+        1586 - пропадевтика внутр медицини
+        1443 - загальна хірургія
+        992 - іноземна мова
+        1581 - патоморфологія
+        1582 - патофізіологія
+        1662 - біостатистика
+        503 - отоларингологія
+        504 - офтальмологія
+        1666 - Дерматологія
+        325 - Фтизіатрія
+        416 - Комбустіологія
+        364 - Урологія
+        1667 - Фізична реабілітація, спортивна медицина
+        353 - Онкологія
+        254 - Радіаційна медицина
+        1137 - Соціальна медицина та організація охорони здоровя
+        354 - Основи стоматології
+        103 - Клінічна фармакологія
+        348 - Медична генетика
+        351 - Нейрохірургія
+        262 - Секційний курс
+        1891 - Педіатрія, дитячі інфекції
+        552 - Соціальна медицина, організація охорони здоров'я та економіка охорони здоров'я
+        1934
+        1916 - Гігієна та екологія (для 6 курсу)
+        1796 - Загальна практика (сімейна медицина)
+- vis.specialityid  - код спеціальності (!на момент створення варіанту дисципліни) 
+        (6 / 59 -лікув.спр., 13 / 63 -стоматологія, 19 / 69 -провізори, 5 -клінпровізори, 15 -тпкз)
+- b_testlist.DEPARTMENTID - код факультету (з довідника), по якому обробляються відомості 
+        (43 - мед., 13-стом, 14-фарм , 12-іноз)
+- (b_testlist.semester in (1,2))and(b_testlist.eduyear in (2011))... - перелік навчальних років та семестрів, з яких треба взяти відомості
+select 
+    avg( student2testlist.credits_test ) avg_of_credits_test,
+    avg( student2testlist.credits_all ) avg_of_credits_all
+from student2testlist
+where
+  student2testlist.testlistid in
+(
+select 
+    b_testlist.testlistid
+from b_testlist
+where b_testlist.variantid in
+(
+select 
+    b_variant_items.variantid
+from b_variant_items
+where 
+   (b_variant_items.parentvariantid in
+   (
+        select 
+            vis.variantid
+        from b_variant_items vis
+        where
+           (vis.begin_eduyear = 2010)and(vis.disciplineid = 25)and(vis.specialityid = 6)
+   )
+   )
+)
+and
+(b_testlist.DEPARTMENTID = 43)
+and
+(
+(
+(b_testlist.semester in (1,2))
+and
+(b_testlist.eduyear in (2011))
+)
+or
+(
+(b_testlist.semester in (3))
+and
+(b_testlist.eduyear in (2012))
+)
+) 
+)  
+  

@@ -1,0 +1,284 @@
+1.1 Average test time by subjects with full dep. names
+----------------------------------------------------------
+SELECT mdl_course_categories.name, mdl_course.fullname, round(avg(timefinish - timestart) /60,1) as avg_quiz_time
+FROM mdl_quiz_attempts 
+INNER JOIN mdl_quiz ON mdl_quiz.id = mdl_quiz_attempts.quiz
+INNER JOIN mdl_course ON mdl_course.id = mdl_quiz.course
+INNER JOIN mdl_course_categories ON  mdl_course_categories.id = mdl_course.category
+WHERE quiz =15735 AND ((timefinish - timestart) /60)<24
+
+
+
+SELECT mdl_course_categories.name, mdl_course.fullname, mdl_quiz.id, count(mdl_quiz_attempts.quiz), round(avg(timefinish - timestart) /60,1) as avg_quiz_time
+FROM mdl_quiz_attempts 
+INNER JOIN mdl_quiz ON mdl_quiz.id = mdl_quiz_attempts.quiz
+INNER JOIN mdl_course ON mdl_course.id = mdl_quiz.course
+INNER JOIN mdl_course_categories ON  mdl_course_categories.id = mdl_course.category
+WHERE ((timefinish - timestart) /60)<25
+GROUP BY mdl_quiz.id 
+ORDER BY mdl_quiz.id
+
+
+SELECT mdl_course.category, mdl_course.fullname, mdl_quiz.id, count(mdl_quiz_attempts.quiz), round(avg(timefinish - timestart) /60,1) as avg_quiz_time
+FROM mdl_quiz_attempts 
+INNER JOIN mdl_quiz ON mdl_quiz.id = mdl_quiz_attempts.quiz
+INNER JOIN mdl_course ON mdl_course.id = mdl_quiz.course
+WHERE ((timefinish - timestart) /60)<25
+GROUP BY mdl_quiz.id 
+ORDER BY mdl_quiz.id
+
+SELECT mdl_course.category, mdl_course.fullname, count(mdl_quiz_attempts.quiz), round(avg(timefinish - timestart) /60,1) as avg_quiz_time
+FROM mdl_quiz_attempts 
+INNER JOIN mdl_quiz ON mdl_quiz.id = mdl_quiz_attempts.quiz
+INNER JOIN mdl_course ON mdl_course.id = mdl_quiz.course
+WHERE ((timefinish - timestart) /60)<25
+GROUP BY mdl_course.id 
+ORDER BY mdl_course.id
+
+========================================================================
+1.2 Display Average test time by subjects by departments (HTML remove from full dep. names)
+-------------------------
+SELECT LEFT(strip_tags(mdl_course_categories.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(mdl_course_categories.name)))-1) as dep_name, mdl_course.fullname AS subj_name, round(avg(timefinish - timestart) /60,1) as avg_quiz_time
+FROM mdl_quiz_attempts 
+INNER JOIN mdl_quiz ON mdl_quiz.id = mdl_quiz_attempts.quiz
+INNER JOIN mdl_course ON mdl_course.id = mdl_quiz.course
+INNER JOIN mdl_course_categories ON  mdl_course_categories.id = mdl_course.category
+WHERE ((timefinish - timestart) /60)<24 AND  ((timefinish - timestart) /60) > 0
+GROUP BY mdl_course.fullname
+
+==========================================================================
+1.3 Optimized: Display Average test time by subjects by departments (HTML remove from full dep. names)
+-------------------------
+SELECT LEFT(strip_tags(mdl_course_categories.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(mdl_course_categories.name)))-1) as dep_name, q1.subj_name, q1.avg_quiz_time
+FROM
+(SELECT mdl_course.category as dep_id, mdl_course.id, mdl_course.fullname AS subj_name, round(avg(timefinish - timestart) /60,1) as avg_quiz_time
+FROM mdl_quiz_attempts 
+INNER JOIN mdl_quiz ON mdl_quiz.id = mdl_quiz_attempts.quiz
+INNER JOIN mdl_course ON mdl_course.id = mdl_quiz.course
+INNER JOIN mdl_course_categories ON  mdl_course_categories.id = mdl_course.category
+WHERE ((timefinish - timestart) /60)<24 AND ((timefinish - timestart) /60) > 0
+GROUP BY mdl_course.id) AS q1
+INNER JOIN mdl_course_categories ON  mdl_course_categories.id = q1.dep_id
+ORDER BY dep_name, q1.subj_name
+==========================================================================
+1.4 Display Average test time by subjects by departments for given time interval (like education year) (HTML remove from full dep. names)
+-with attempt count
+WORK OK!!!!!!!!!!!!!!!!!!!!(19/01/2014)
+-------------------------
+SELECT LEFT(strip_tags(mdl_course_categories.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(mdl_course_categories.name)))-1) as dep_name, q1.subj_name, q1.attempt_count, q1.avg_quiz_time
+FROM
+(SELECT mdl_course.category as dep_id, mdl_course.id, mdl_course.fullname AS subj_name, count(mdl_quiz_attempts.quiz) AS attempt_count, round(avg(timefinish - timestart) /60,1) as avg_quiz_time
+FROM mdl_quiz_attempts 
+INNER JOIN mdl_quiz ON mdl_quiz.id = mdl_quiz_attempts.quiz
+INNER JOIN mdl_course ON mdl_course.id = mdl_quiz.course
+INNER JOIN mdl_course_categories ON  mdl_course_categories.id = mdl_course.category
+WHERE (((timefinish - timestart) /60)<26) AND (((timefinish - timestart) /60) > 0)AND(timestart>UNIX_TIMESTAMP('2012-09-01 00:00:00'))AND(timestart<UNIX_TIMESTAMP('2013-07-01 00:00:00'))
+GROUP BY mdl_course.id) AS q1
+INNER JOIN mdl_course_categories ON  mdl_course_categories.id = q1.dep_id
+ORDER BY dep_name, q1.subj_name
+-------------------------
+==========================================================================
+1.5 Display Average test time by subjects by departments for given time interval (like education year) (HTML remove from full dep. names)
+-with attempt count and average mark
+WORK OK!!!!!!!!!!!!!!!!!!!!(19/01/2014)
+-------------------------
+SELECT LEFT(strip_tags(mdl_course_categories.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(mdl_course_categories.name)))-1) as dep_name, q1.subj_name, q1.attempt_count, q1.avg_quiz_time, q2.avg_quiz_grade
+FROM
+(SELECT mdl_course.category as dep_id, mdl_course.id, mdl_course.fullname AS subj_name, count(mdl_quiz_attempts.quiz) AS attempt_count, round(avg(timefinish - timestart) /60,1) as avg_quiz_time
+FROM mdl_quiz_attempts 
+INNER JOIN mdl_quiz ON mdl_quiz.id = mdl_quiz_attempts.quiz
+INNER JOIN mdl_course ON mdl_course.id = mdl_quiz.course
+INNER JOIN mdl_course_categories ON  mdl_course_categories.id = mdl_course.category
+WHERE (((timefinish - timestart) /60)<26) AND (((timefinish - timestart) /60) > 0)AND(timestart>UNIX_TIMESTAMP('2012-09-01 00:00:00'))AND(timestart<UNIX_TIMESTAMP('2013-07-01 00:00:00'))
+GROUP BY mdl_course.id) AS q1
+INNER JOIN 
+(SELECT mdl_course.id, round(avg(mdl_quiz_grades.grade),1) as avg_quiz_grade
+FROM mdl_quiz_grades 
+INNER JOIN mdl_quiz ON mdl_quiz.id = mdl_quiz_grades.quiz
+INNER JOIN mdl_course ON mdl_course.id = mdl_quiz.course
+WHERE (mdl_quiz_grades.timemodified>UNIX_TIMESTAMP('2012-09-01 00:00:00'))AND(mdl_quiz_grades.timemodified<UNIX_TIMESTAMP('2013-07-01 00:00:00'))
+GROUP BY mdl_course.id) AS q2 ON q1.id = q2.id
+INNER JOIN mdl_course_categories ON  mdl_course_categories.id = q1.dep_id
+ORDER BY dep_name, q1.subj_name
+-----------------------------
+Optimized!
+-----------------------------
+SELECT LEFT(strip_tags(mdl_course_categories.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(mdl_course_categories.name)))-1) as dep_name, q1.subj_name, q1.attempt_count, q1.avg_quiz_time, q2.avg_quiz_grade
+FROM
+(SELECT ct.category as dep_id, ct.id, ct.fullname AS subj_name, count(qat.quiz) AS attempt_count, round(avg(qat.timefinish - qat.timestart) /60,1) as avg_quiz_time
+FROM mdl_quiz_attempts AS qat 
+INNER JOIN mdl_quiz AS qt ON qt.id = qat.quiz
+INNER JOIN mdl_course AS ct ON ct.id = qt.course
+INNER JOIN mdl_course_categories AS cct ON  cct.id = ct.category
+WHERE (((qat.timefinish - qat.timestart) /60)<26) AND (((qat.timefinish - qat.timestart) /60) > 0)AND(qat.timestart>UNIX_TIMESTAMP('2012-09-01 00:00:00'))AND(qat.timestart<UNIX_TIMESTAMP('2013-07-01 00:00:00'))
+GROUP BY ct.id) AS q1
+INNER JOIN 
+(SELECT ca.id, round(avg(qga.grade),1) as avg_quiz_grade
+FROM mdl_quiz_grades AS qga 
+INNER JOIN mdl_quiz AS qa ON qa.id = qga.quiz
+INNER JOIN mdl_course AS ca ON ca.id = qa.course
+WHERE (qga.timemodified>UNIX_TIMESTAMP('2012-09-01 00:00:00'))AND(qga.timemodified<UNIX_TIMESTAMP('2013-07-01 00:00:00'))
+GROUP BY ca.id) AS q2 ON q1.id = q2.id
+INNER JOIN mdl_course_categories ON  mdl_course_categories.id = q1.dep_id
+ORDER BY dep_name, q1.subj_name
+-----------------------------
+Optimized! - to use in modle ad-hoc query block
+-----------------------------
+SELECT LEFT(strip_tags(cc_g.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(cc_g.name)))-1) as dep_name, 
+concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',q1.id,'">',q1.subj_name,'</a>') AS Course, 
+concat('<a target="_new" href="%%WWWROOT%%/mod/quiz/index.php?id=',q1.id,'">Link</a>') AS Quizes, 
+ q1.attempt_count, q1.avg_quiz_time, q2.avg_quiz_grade
+FROM
+(SELECT ct.category as dep_id, ct.id, ct.fullname AS subj_name, count(qat.quiz) AS attempt_count, round(avg(qat.timefinish - qat.timestart) /60,1) as avg_quiz_time
+FROM prefix_quiz_attempts AS qat 
+INNER JOIN prefix_quiz AS qt ON qt.id = qat.quiz
+INNER JOIN prefix_course AS ct ON ct.id = qt.course
+INNER JOIN prefix_course_categories AS cct ON  cct.id = ct.category
+WHERE (((qat.timefinish - qat.timestart) /60)<26) AND (((qat.timefinish - qat.timestart) /60) > 0)AND(qat.timestart>UNIX_TIMESTAMP('2012-09-01 00:00:00'))AND(qat.timestart<UNIX_TIMESTAMP('2013-07-01 00:00:00'))
+GROUP BY ct.id) AS q1
+INNER JOIN 
+(SELECT ca.id, round(avg(qga.grade),1) as avg_quiz_grade
+FROM prefix_quiz_grades AS qga 
+INNER JOIN prefix_quiz AS qa ON qa.id = qga.quiz
+INNER JOIN prefix_course AS ca ON ca.id = qa.course
+WHERE (qga.timemodified>UNIX_TIMESTAMP('2012-09-01 00:00:00'))AND(qga.timemodified<UNIX_TIMESTAMP('2013-07-01 00:00:00'))
+GROUP BY ca.id) AS q2 ON q1.id = q2.id
+INNER JOIN prefix_course_categories AS cc_g ON  cc_g.id = q1.dep_id
+ORDER BY dep_name, q1.subj_name
+-------------------------
+==========================================================================
+1.5 Display Average test time by subjects by departments for given time interval (like education year) (HTML remove from full dep. names)
+-with attempt count and average mark and quiz count 
+WORK OK!!!!!!!!!!!!!!!!!!!!(19/01/2014)
+-------------------------
+
+Optimized!  to use in modle ad-hoc query block
+-----------------------------
+SELECT LEFT(strip_tags(cc_g.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(cc_g.name)))-1) as dep_name, 
+concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',q1.id,'">',q1.subj_name,'</a>') AS Course, 
+concat('<a target="_new" href="%%WWWROOT%%/mod/quiz/index.php?id=',q1.id,'">Link</a>') AS Quizes, 
+ q3.test_count, q1.attempt_count, q1.avg_quiz_time, q2.avg_quiz_grade
+FROM
+(SELECT ct.category as dep_id, ct.id, ct.fullname AS subj_name, count(qat.quiz) AS attempt_count, round(avg(qat.timefinish - qat.timestart) /60,1) as avg_quiz_time
+FROM prefix_quiz_attempts AS qat 
+INNER JOIN prefix_quiz AS qt ON qt.id = qat.quiz
+INNER JOIN prefix_course AS ct ON ct.id = qt.course
+INNER JOIN prefix_course_categories AS cct ON  cct.id = ct.category
+WHERE (((qat.timefinish - qat.timestart) /60)<26) AND (((qat.timefinish - qat.timestart) /60) > 0)AND(qat.timestart>UNIX_TIMESTAMP('2012-09-01 00:00:00'))AND(qat.timestart<UNIX_TIMESTAMP('2013-07-01 00:00:00'))
+GROUP BY ct.id) AS q1
+LEFT JOIN 
+(SELECT ca.id, round(avg(qga.grade),1) as avg_quiz_grade
+FROM prefix_quiz_grades AS qga 
+INNER JOIN prefix_quiz AS qa ON qa.id = qga.quiz
+INNER JOIN prefix_course AS ca ON ca.id = qa.course
+WHERE (qga.timemodified>UNIX_TIMESTAMP('2012-09-01 00:00:00'))AND(qga.timemodified<UNIX_TIMESTAMP('2013-07-01 00:00:00'))
+GROUP BY ca.id) AS q2 ON q1.id = q2.id
+LEFT JOIN 
+(SELECT COUNT(*) AS test_count, c.id 
+FROM prefix_course_modules cm
+JOIN prefix_course c ON c.id = cm.course
+JOIN prefix_modules AS m ON m.id = cm.module
+WHERE m.name LIKE 'quiz'
+GROUP BY c.id
+) as q3 ON q1.id = q3.id
+LEFT JOIN prefix_course_categories AS cc_g ON  cc_g.id = q1.dep_id
+ORDER BY dep_name, q1.subj_name
+-------------------------
+==========================================================================
+1.6 Display Average test time by subjects by departments for given time interval (like education year) with student count in subject (HTML remove from full dep. names)
+-with attempt count and average mark and quiz count 
+WORK OK!!!!!!!!!!!!!!!!!!!!(31/01/2014)
+-------------------------
+
+Optimized!  to use in modle ad-hoc query block
+-----------------------------
+SELECT LEFT(strip_tags(cc_g.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(cc_g.name)))-1) as dep_name, 
+concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',q1.id,'">',q1.subj_name,'</a>') AS Course, 
+concat('<a target="_new" href="%%WWWROOT%%/mod/quiz/index.php?id=',q1.id,'">Link</a>') AS Quizes, 
+ q3.test_count, q1.attempt_count, q1.avg_quiz_time, q2.avg_quiz_grade, q4.stud_count AS Stud_count
+FROM
+(SELECT ct.category as dep_id, ct.id, ct.fullname AS subj_name, count(qat.quiz) AS attempt_count, round(avg(qat.timefinish - qat.timestart) /60,1) as avg_quiz_time
+FROM prefix_quiz_attempts AS qat 
+INNER JOIN prefix_quiz AS qt ON qt.id = qat.quiz
+INNER JOIN prefix_course AS ct ON ct.id = qt.course
+INNER JOIN prefix_course_categories AS cct ON  cct.id = ct.category
+WHERE (((qat.timefinish - qat.timestart) /60)<26) AND (((qat.timefinish - qat.timestart) /60) > 0)AND(qat.timestart>UNIX_TIMESTAMP('2014-01-01 00:00:00'))AND(qat.timestart<UNIX_TIMESTAMP('2014-01-31 00:00:00'))
+GROUP BY ct.id) AS q1
+LEFT JOIN 
+(SELECT ca.id, round(avg(qga.grade),1) as avg_quiz_grade
+FROM prefix_quiz_grades AS qga 
+INNER JOIN prefix_quiz AS qa ON qa.id = qga.quiz
+INNER JOIN prefix_course AS ca ON ca.id = qa.course
+WHERE (qga.timemodified>UNIX_TIMESTAMP('2014-01-01 00:00:00'))AND(qga.timemodified<UNIX_TIMESTAMP('2014-01-31 00:00:00'))
+GROUP BY ca.id) AS q2 ON q1.id = q2.id
+LEFT JOIN 
+(SELECT COUNT(*) AS test_count, c.id 
+FROM prefix_course_modules cm
+JOIN prefix_course c ON c.id = cm.course
+JOIN prefix_modules AS m ON m.id = cm.module
+WHERE m.name LIKE 'quiz'
+GROUP BY c.id
+) as q3 ON q1.id = q3.id
+LEFT JOIN
+(SELECT course.id, COUNT(course.id) AS stud_count
+FROM prefix_role_assignments AS asg
+JOIN prefix_context AS context ON asg.contextid = context.id AND context.contextlevel = 50
+JOIN prefix_user AS USER ON USER.id = asg.userid
+JOIN prefix_course AS course ON context.instanceid = course.id
+WHERE asg.roleid = 5 
+GROUP BY course.id
+) AS q4 ON q1.id = q4.id
+LEFT JOIN prefix_course_categories AS cc_g ON  cc_g.id = q1.dep_id
+ORDER BY dep_name, q1.subj_name
+
+-------------------------
+==========================================================================
+
+
+---------------------
+Below - not working propely!!!!(19/01/2014)
+==========================================================================
+2.1 Display Average test time by students for given time interval (like education year)
+-------------------------
+SELECT CONCAT(mdl_user.lastname,' ',mdl_user.firstname) AS FIO, count(mdl_quiz_attempts.id) as attempts_count, round(avg(mdl_quiz_grades.grade)) as avg_quiz_grade, round(avg(timefinish - timestart) /60,0) as avg_quiz_time
+FROM mdl_quiz_attempts 
+INNER JOIN mdl_quiz_grades ON mdl_quiz_grades.quiz = mdl_quiz_attempts.quiz
+INNER JOIN mdl_user ON mdl_user.id = mdl_quiz_grades.userid
+WHERE (((timefinish - timestart) /60)<24) AND (((timefinish - timestart) /60) > 0)AND(FROM_UNIXTIME(timestart)>'2012-09-01 00:00:00')AND(FROM_UNIXTIME(timestart)>'2013-07-01 00:00:00')
+GROUP BY mdl_user.id
+ORDER BY avg_quiz_time ASC 
+LIMIT 0, 1000 
+
+SELECT CONCAT(mdl_user.lastname,' ',mdl_user.firstname) AS FIO, q1.attempts_count, q1.avg_quiz_grade, q1.avg_quiz_time
+FROM 
+(SELECT mdl_quiz_grades.userid, count(mdl_quiz_attempts.id) as attempts_count, round(avg(mdl_quiz_grades.grade)) as avg_quiz_grade, round(avg(timefinish - timestart) /60,0) as avg_quiz_time
+FROM mdl_quiz_attempts 
+INNER JOIN mdl_quiz_grades ON mdl_quiz_grades.quiz = mdl_quiz_attempts.quiz
+WHERE (((timefinish - timestart) /60)<24) AND (((timefinish - timestart) /60) > 0)AND(timestart>UNIX_TIMESTAMP('2012-09-01 00:00:00'))AND(timestart<UNIX_TIMESTAMP('2013-07-01 00:00:00')) 
+GROUP BY mdl_quiz_grades.userid
+ORDER BY avg_quiz_time ASC
+HAVING attempts_count > 100
+) AS q1
+INNER JOIN mdl_user ON mdl_user.id = q1.userid
+LIMIT 0, 1000 
+
+
+SELECT mdl_quiz_grades.userid, count(mdl_quiz_attempts.id) as attempts_count, round(avg(mdl_quiz_grades.grade)) as avg_quiz_grade, round(avg(timefinish - timestart) /60,0) as avg_quiz_time
+FROM mdl_quiz_attempts 
+INNER JOIN mdl_quiz_grades ON mdl_quiz_grades.quiz = mdl_quiz_attempts.quiz
+WHERE (((timefinish - timestart) /60)<24) AND (((timefinish - timestart) /60) > 0)AND(FROM_UNIXTIME(timestart)>'2012-09-01 00:00:00')AND(FROM_UNIXTIME(timestart)>'2013-07-01 00:00:00') 
+GROUP BY mdl_quiz_grades.userid
+HAVING attempts_count > 100
+
+SELECT CONCAT(mdl_user.lastname,' ',mdl_user.firstname) AS FIO, q1.attempts_count, q1.avg_quiz_grade, q1.avg_quiz_time
+FROM 
+(SELECT mdl_quiz_grades.userid, count(mdl_quiz_attempts.id) as attempts_count, round(avg(mdl_quiz_grades.grade)) as avg_quiz_grade, round(avg(timefinish - timestart) /60,0) as avg_quiz_time
+FROM mdl_quiz_attempts 
+INNER JOIN mdl_quiz_grades ON mdl_quiz_grades.quiz = mdl_quiz_attempts.quiz
+WHERE (((timefinish - timestart) /60)<24) AND (((timefinish - timestart) /60) > 0)AND(FROM_UNIXTIME(timestart)>'2012-09-01 00:00:00')AND(FROM_UNIXTIME(timestart)>'2013-07-01 00:00:00') 
+GROUP BY mdl_quiz_grades.userid
+HAVING attempts_count > 50
+ORDER BY avg_quiz_time ASC, attempts_count DESC
+) AS q1
+INNER JOIN mdl_user ON mdl_user.id = q1.userid
+

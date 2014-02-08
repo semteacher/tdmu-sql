@@ -1,0 +1,39 @@
+SELECT COUNT(l.id) count, l.course, l.name, concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,'">',c.fullname,'</a>') AS Course
+FROM prefix_resource l INNER JOIN prefix_course c ON l.course = c.id
+GROUP BY course, name
+ORDER BY count DESC
+
+=================================
+working - moodle report notation
+
+SELECT cc.name "Кафедра", concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,'">',c.fullname,'</a>') AS "Предмет", l.name "Тип ресурсу", COUNT(l.id) count
+FROM prefix_resource l 
+INNER JOIN prefix_course c ON l.course = c.id 
+INNER JOIN `prefix_course_categories` cc ON cc.id=c.category 
+GROUP BY cc.id, l.course, l.name
+ORDER BY cc.id, l.course, count DESC
+
+==================================
+working - moodle report notation
+detect faculty name also
+
+SELECT cc.id "Код каф.", cc.name "Кафедра", 
+(CASE 
+WHEN (locate('мед', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Медичний" 
+WHEN (locate('стомат', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Стоматологічний" 
+WHEN (locate('фарм', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Фармацевтчний" 
+WHEN (locate('мед', c.fullname) >0)AND(locate('рус', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('стомат', c.fullname) >0)AND(locate('рус', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('фарм', c.fullname) >0)AND(locate('рус', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('stomat', c.fullname) >0)AND(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('stom', c.fullname) >0)AND(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('med', c.fullname) >0)AND(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('farm', c.fullname) >0)AND(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('nurse', c.fullname) >0)AND(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+END) AS faculty,
+concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,'">',c.fullname,'</a>') AS "Предмет", l.name "Тип ресурсу", COUNT(l.id) count
+FROM prefix_resource l 
+INNER JOIN prefix_course c ON l.course = c.id 
+INNER JOIN `prefix_course_categories` cc ON cc.id=c.category 
+GROUP BY cc.id, l.course, l.name
+ORDER BY cc.id, faculty, l.course, count DESC

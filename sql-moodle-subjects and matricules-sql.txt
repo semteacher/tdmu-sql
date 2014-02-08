@@ -1,0 +1,32 @@
+count of the subjects per department:
+
+SELECT ct.id, ct.name, count(c.id) subj_count FROM `mdl_course_categories` as ct, `mdl_course` as c WHERE ct.id=c.category group by ct.id, ct.name
+
+count of the matricules:
+
+SELECT ct.id, ct.name, count(c.id) subj_count, count(matr.course) matr_count FROM `mdl_course_categories` as ct, `mdl_course` as c, `mdl_checklist` as matr WHERE (ct.id=c.category)and(c.id=matr.course) group by ct.id, ct.name
+
+
+
+
+SELECT ct.id, ct.name, count( c.id ) subj_count, count( matr.course ) matr_count, (
+count( matr.course ) / count( c.id )
+)perc
+FROM `mdl_course_categories` AS ct, `mdl_course` AS c, `mdl_checklist` AS matr
+WHERE (
+ct.id = c.category
+)
+AND (
+c.id = matr.course
+)
+GROUP BY ct.id, ct.name
+ORDER BY perc
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SELECT ct.id, ct.name, count( c.id ) subj_count, count( matr.course ) matr_count, (
+count( matr.course ) / count( c.id )
+)perc
+FROM `mdl_course_categories` AS ct
+join `mdl_course` AS c on ct.id = c.category left join `mdl_checklist` AS matr on c.id = matr.course
+GROUP BY ct.id, ct.name
+ORDER BY perc

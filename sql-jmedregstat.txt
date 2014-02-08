@@ -1,0 +1,27 @@
+1. Retreiwe all patient count by each medoffice 
+SELECT CONCAT_WS('-', m.name, m.town) as location, st.vizit_date, st.patient_count FROM  `medoffice` m INNER JOIN `statdetail` st ON st.office_id=m.id
+=============================================================================
+=============================================================================
+2. calculate summary by years and month per office
+
+SELECT office_id, YEAR(vizit_date) as n_year, MONTH(vizit_date) as n_month, sum(patient_count) as sum2month FROM `statdetail` where YEAR(vizit_date) >= 2010 GROUP BY office_id, YEAR(vizit_date), MONTH(vizit_date)
+=============================================================================
+2.1. calculate summary by years and month per office with office data
+
+SELECT CONCAT_WS('-', m.name, m.town) as location, office_id, YEAR(st.vizit_date) as n_year, MONTH(st.vizit_date) as n_month, sum(st.patient_count) as sum2month FROM  `medoffice` m INNER JOIN `statdetail` st ON st.office_id=m.id where YEAR(st.vizit_date) >= 2010 GROUP BY st.office_id, YEAR(st.vizit_date), MONTH(st.vizit_date)
+=============================================================================
+=============================================================================
+3.1 - wrong
+
+SELECT t.n_year, t.n_month, 
+IF(t.office_id=1, t.sum2month, NULL) AS lo_1, 
+IF(t.office_id=2, t.sum2month, NULL) AS lo_2,
+IF(t.office_id=3, t.sum2month, NULL) AS lo_3,
+IF(t.office_id=4, t.sum2month, NULL) AS lo_4
+FROM (
+SELECT CONCAT_WS('-', m.name, m.town) as location, st.office_id, YEAR(st.vizit_date) as n_year, MONTH(st.vizit_date) as n_month, sum(st.patient_count) as sum2month FROM  `medoffice` m INNER JOIN `statdetail` st ON st.office_id=m.id where YEAR(st.vizit_date) >= 2010 GROUP BY st.office_id, YEAR(st.vizit_date), MONTH(st.vizit_date)
+) t 
+GROUP BY t.n_year, t.n_month
+=============================================================================
+=============================================================================
+4.1 - 

@@ -1,0 +1,89 @@
+SELECT cc.id "Код каф. -", cc.name "Назва кафедри", round(avg(qg.grade),2) "Середній бал -", YEAR(qg.timemodified) myear, QUARTER(qg.timemodified) mquarter
+FROM `prefix_quiz_grades` qg 
+INNER JOIN `prefix_quiz` q ON q.id=qg.quiz 
+INNER JOIN `prefix_course` c ON c.id=q.course 
+INNER JOIN `prefix_course_categories` cc ON cc.id=c.category 
+WHERE qg.timemodified between UNIX_TIMESTAMP('2013-01-01') and UNIX_TIMESTAMP('2013-06-30')
+GROUP BY c.category, myear, mquarter
+ORDER BY c.category, myear, mquarter
+
+
+====================================================================================================================================================
+SELECT c.category depcategory, cc.id depid, cc.name depname, qg.grade usrgrade, YEAR(qg.timemodified) myear, QUARTER(qg.timemodified) mquarter
+FROM `prefix_quiz_grades` qg 
+INNER JOIN `prefix_quiz` q ON q.id=qg.quiz 
+INNER JOIN `prefix_course` c ON c.id=q.course 
+INNER JOIN `prefix_course_categories` cc ON cc.id=c.category 
+GROUP BY c.category, myear, mquarter
+ORDER BY c.category, myear, mquarter
+
+
+====================================================================================================================================================
+select ttl.depid, ttl.depname, ttl.myear, IF(mquarter=1,ttl.grdeavg,NULL) 'q_1', IF(mquarter=2,ttl.grdeavg,NULL) 'q_1'
+from
+(SELECT c.category depcategory, cc.id depid, cc.name depname, round(avg(qg.grade),2) grdeavg, YEAR(FROM_UNIXTIME(qg.timemodified)) myear, QUARTER(FROM_UNIXTIME(qg.timemodified)) mquarter
+FROM `mdl_quiz_grades` qg 
+INNER JOIN `mdl_quiz` q ON q.id=qg.quiz 
+INNER JOIN `mdl_course` c ON c.id=q.course 
+INNER JOIN `mdl_course_categories` cc ON cc.id=c.category 
+GROUP BY c.category, myear, mquarter
+ORDER BY c.category, myear, mquarter) as ttl
+
+====================================================================================================================================================
+select ttl.depid "Код каф. -", ttl.depname "Назва кафедри", ttl.myear "Рік", ttl.q_1 '1 кв.', ttl.q_2 '2 кв.', ttl.q_3 '3 кв.', ttl.q_4 '4 кв.'
+from
+(
+SELECT c.category depcategory, cc.id depid, cc.name depname, round(avg(CASE WHEN QUARTER(FROM_UNIXTIME(qg.timemodified)) =1 THEN qg.grade END),2) q_1, round(avg(CASE WHEN QUARTER(FROM_UNIXTIME(qg.timemodified)) =2 THEN qg.grade END),2) q_2, round(avg(CASE WHEN QUARTER(FROM_UNIXTIME(qg.timemodified)) =3 THEN qg.grade END),2) q_3, round(avg(CASE WHEN QUARTER(FROM_UNIXTIME(qg.timemodified)) =4 THEN qg.grade END),2) q_4, YEAR(FROM_UNIXTIME(qg.timemodified)) myear
+FROM `mdl_quiz_grades` qg 
+INNER JOIN `mdl_quiz` q ON q.id=qg.quiz 
+INNER JOIN `mdl_course` c ON c.id=q.course 
+INNER JOIN `mdl_course_categories` cc ON cc.id=c.category 
+GROUP BY c.category, myear
+ORDER BY c.category, myear) as ttl
+
+-------------------------------------------------------------
+
+select ttl.depid "Код каф. -", ttl.depname "Назва кафедри", ttl.myear "Рік", ttl.q_1 '1 кв.', ttl.q_2 '2 кв.', ttl.q_3 '3 кв.', ttl.q_4 '4 кв.'
+from
+(
+SELECT c.category depcategory, cc.id depid, cc.name depname, round(avg(CASE WHEN QUARTER(FROM_UNIXTIME(qg.timemodified)) =1 THEN qg.grade END),2) q_1, round(avg(CASE WHEN QUARTER(FROM_UNIXTIME(qg.timemodified)) =2 THEN qg.grade END),2) q_2, round(avg(CASE WHEN QUARTER(FROM_UNIXTIME(qg.timemodified)) =3 THEN qg.grade END),2) q_3, round(avg(CASE WHEN QUARTER(FROM_UNIXTIME(qg.timemodified)) =4 THEN qg.grade END),2) q_4, YEAR(FROM_UNIXTIME(qg.timemodified)) myear
+FROM `prefix_quiz_grades` qg 
+INNER JOIN `prefix_quiz` q ON q.id=qg.quiz 
+INNER JOIN `prefix_course` c ON c.id=q.course 
+INNER JOIN `prefix_course_categories` cc ON cc.id=c.category 
+GROUP BY c.category, myear
+ORDER BY c.category, myear) as ttl
+
+=====================================================
+//UDF - remove HTML tags form sting:
+-----------------------------------------------------
+SET GLOBAL log_bin_trust_function_creators=1;
+DROP FUNCTION IF EXISTS looptest;
+DELIMITER $$
+CREATE FUNCTION strip_tags ($str TEXT) RETURNS TEXT
+BEGIN
+    DECLARE $start, $end INT DEFAULT 1;
+    LOOP
+        SET $start = LOCATE('<', $str, $start);
+        IF (!$start) THEN RETURN $str; END IF;
+        SET $end = LOCATE('>', $str, $start);
+        IF (!$end) THEN SET $end = $start; END IF;
+        SET $str = INSERT($str, $start, $end - $start + 1, '');
+    END LOOP;
+END;
+$$
+DELIMITER ;
+=====================================================
+Automatic remove HTML tags and english name (delete all contents inside brackets)
+--------------------------------------------------------
+
+select ttl.depid "Код каф. -", LEFT(strip_tags(ttl.depname),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(ttl.depname)))-1) as "Назва кафедри", ttl.myear "Рік", ttl.q_1 '1 кв.', ttl.q_2 '2 кв.', ttl.q_3 '3 кв.', ttl.q_4 '4 кв.'
+from
+(
+SELECT c.category depcategory, cc.id depid, cc.name depname, round(avg(CASE WHEN QUARTER(FROM_UNIXTIME(qg.timemodified)) =1 THEN qg.grade END),2) q_1, round(avg(CASE WHEN QUARTER(FROM_UNIXTIME(qg.timemodified)) =2 THEN qg.grade END),2) q_2, round(avg(CASE WHEN QUARTER(FROM_UNIXTIME(qg.timemodified)) =3 THEN qg.grade END),2) q_3, round(avg(CASE WHEN QUARTER(FROM_UNIXTIME(qg.timemodified)) =4 THEN qg.grade END),2) q_4, YEAR(FROM_UNIXTIME(qg.timemodified)) myear
+FROM `mdl_quiz_grades` qg 
+INNER JOIN `mdl_quiz` q ON q.id=qg.quiz 
+INNER JOIN `mdl_course` c ON c.id=q.course 
+INNER JOIN `mdl_course_categories` cc ON cc.id=c.category 
+GROUP BY c.category, myear
+ORDER BY c.category, myear) as ttl
