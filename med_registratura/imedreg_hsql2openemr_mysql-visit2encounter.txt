@@ -1,0 +1,54 @@
+-- phpMyAdmin SQL Dump
+-- version 2.11.10
+-- http://www.phpmyadmin.net
+--
+-- Хост: localhost:3306
+-- Час створення: Лют 09 2014 р., 07:49
+-- Версія сервера: 5.0.96
+-- Версія PHP: 5.2.4-2ubuntu5.25
+
+SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
+
+--
+-- БД: `openemr`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблиці `form_encounter`
+--звертані за консультацією. мабуть, відповдає "event" в медреєстратурі
+
+CREATE TABLE IF NOT EXISTS `form_encounter` (
+  `id` bigint(20) NOT NULL auto_increment,
+  `date` datetime default NULL,
+  `reason` longtext,
+  `facility` longtext,
+  `facility_id` int(11) NOT NULL default '0',
+  `pid` bigint(20) default NULL,
+  `encounter` bigint(20) default NULL,
+  `onset_date` datetime default NULL,
+  `sensitivity` varchar(30) default NULL,
+  `billing_note` text,
+  `pc_catid` int(11) NOT NULL default '5' COMMENT 'event category from openemr_postcalendar_categories',
+  `last_level_billed` int(11) NOT NULL default '0' COMMENT '0=none, 1=ins1, 2=ins2, etc',
+  `last_level_closed` int(11) NOT NULL default '0' COMMENT '0=none, 1=ins1, 2=ins2, etc',
+  `last_stmt_date` date default NULL,
+  `stmt_count` int(11) NOT NULL default '0',
+  `provider_id` int(11) default '0' COMMENT 'default and main provider for this visit',
+  `supervisor_id` int(11) default '0' COMMENT 'supervising provider, if any, for this visit',
+  `invoice_refno` varchar(31) NOT NULL default '',
+  `referral_source` varchar(31) NOT NULL default '',
+  `billing_facility` int(11) default NULL,
+  PRIMARY KEY  (`id`),
+  KEY `pid_encounter` (`pid`,`encounter`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=3 ;
+
+--
+-- Дамп даних таблиці `form_encounter`
+--
+
+INSERT INTO `form_encounter` 
+(`id`, `date`, `reason`, `facility`, `facility_id`, `pid`, `encounter`, `onset_date`, `sensitivity`, `billing_note`, `pc_catid`, `last_level_billed`, `last_level_closed`, `last_stmt_date`, `stmt_count`, `provider_id`, `supervisor_id`, `invoice_refno`, `referral_source`, `billing_facility`) VALUES
+(1, '2014-02-03 00:00:00', 'консультація1', 'Тернопільська університетська лікарня', 3, 1, 2, '0000-00-00 00:00:00', 'normal', NULL, 5, 0, 0, NULL, 0, 1, 0, '', '', 3),
+(2, '2014-02-09 00:00:00', 'консультація2', 'Тернопільська університетська лікарня', 3, 1, 3, '0000-00-00 00:00:00', 'normal', NULL, 5, 0, 0, NULL, 0, 1, 0, '', '', 3);

@@ -1,0 +1,62 @@
+﻿-- phpMyAdmin SQL Dump
+-- version 2.11.10
+-- http://www.phpmyadmin.net
+--
+-- Хост: localhost:3306
+-- Час створення: Лют 09 2014 р., 07:49
+-- Версія сервера: 5.0.96
+-- Версія PHP: 5.2.4-2ubuntu5.25
+
+SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
+
+--
+-- БД: `openemr`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблиці `lists`
+--список медичних проблем. якщо нема кынцевоъ дати - ще активна. мабуть, відповідає "event" в медреєстартурі 
+
+CREATE TABLE IF NOT EXISTS `lists` (
+  `id` bigint(20) NOT NULL auto_increment,
+  `date` datetime default NULL,
+  `type` varchar(255) default NULL,
+  `title` varchar(255) default NULL,
+  `begdate` date default NULL,
+  `enddate` date default NULL,
+  `returndate` date default NULL,
+  `occurrence` int(11) default '0',
+  `classification` int(11) default '0',
+  `referredby` varchar(255) default NULL,
+  `extrainfo` varchar(255) default NULL,
+  `diagnosis` varchar(255) default NULL,
+  `activity` tinyint(4) default NULL,
+  `comments` longtext,
+  `pid` bigint(20) default NULL,
+  `user` varchar(255) default NULL,
+  `groupname` varchar(255) default NULL,
+  `outcome` int(11) NOT NULL default '0',
+  `destination` varchar(255) default NULL,
+  `reinjury_id` bigint(20) NOT NULL default '0',
+  `injury_part` varchar(31) NOT NULL default '',
+  `injury_type` varchar(31) NOT NULL default '',
+  `injury_grade` varchar(31) NOT NULL default '',
+  `reaction` varchar(255) NOT NULL default '',
+  `external_allergyid` int(11) default NULL,
+  `erx_source` enum('0','1') NOT NULL default '0' COMMENT '0-OpenEMR 1-External',
+  `erx_uploaded` enum('0','1') NOT NULL default '0' COMMENT '0-Pending NewCrop upload 1-Uploaded TO NewCrop',
+  PRIMARY KEY  (`id`),
+  KEY `type` (`type`),
+  KEY `pid` (`pid`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=3 ;
+
+--
+-- Дамп даних таблиці `lists`
+--
+
+INSERT INTO `lists` 
+(`id`, `date`, `type`, `title`, `begdate`, `enddate`, `returndate`, `occurrence`, `classification`, `referredby`, `extrainfo`, `diagnosis`, `activity`, `comments`, `pid`, `user`, `groupname`, `outcome`, `destination`, `reinjury_id`, `injury_part`, `injury_type`, `injury_grade`, `reaction`, `external_allergyid`, `erx_source`, `erx_uploaded`) VALUES
+(1, '2014-02-09 07:17:55', 'medical_problem', 'my-first', '2014-01-09', '2014-02-09', NULL, 1, 0, '', NULL, 'ICD10:A06.1', 1, '', 1, '', '', 2, '', 0, '', '', '', '', NULL, '0', '0'),
+(2, '2014-02-09 07:26:57', 'medical_problem', 'second', '2014-01-22', '2014-02-09', NULL, 1, 0, '', NULL, 'ICD10:M23.619', 1, '', 1, '', '', 2, '', 0, '', '', '', '', NULL, '0', '0');

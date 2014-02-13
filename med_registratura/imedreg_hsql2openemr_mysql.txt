@@ -1,0 +1,86 @@
+language=ukrainian
+country_code=UA
+state=TE
+
+
+sex: (1=Female 	0=Male)
+
+ref_providerID = ID користувача з НПЦПМСД:
+3 	Тернопільська університетська лікарня
+4 	НПЦПМСД с.Зарубинці
+5 	НПЦПМСД с.Гнилиці
+6 	НПЦПМСД с.Говилів
+7 	НПЦПМСД с.Кокошинці
+8 	НПЦПМСД с.Увисла
+
+facilityID = ID НПЦПМСД:
+2 	doctor 	Доктор 	  	Доктор 	Тернопільська університетська лікарня 	3 	 
+3 	zarub 	практикант 	  	с.Зарубинці 	НПЦПМСД с.Зарубинці 	4 	 
+4 	cocos 	практикант 	  	с.Кокошинці 	НПЦПМСД с.Кокошинці 	7 	 
+5 	gnuluci 	практикант 	  	с.Гнилиці 	НПЦПМСД с.Гнилиці 	5 	 
+6 	govuliv 	практикант 	  	с.Говилів 	НПЦПМСД с.Говилів 	6 	 
+7 	yvusla 	практикант 	  	с.Увисла 	НПЦПМСД с.Увисла 	8 	 
+
+==================================
+спфвставлення полів
+JMEDRGERDB              OPENEMR
+-------------------------------
+PATIENT                         patient_data
+DATE_CREATE	DATE                  date
+PLACE_OF_EMPLOYMENT               occupation
+
+
+MAX_PID=849 
+MAX_ENCOUNTER=489 	
+==================================
+2patient_data:
+
+select 'ukrainian' as language, FIRST_NAME as fname, LAST_NAME as lname, MIDDLE_NAME as mname, BORN as DOB, ADDRESS as street, 'TE' as state, 'UA' as country_code, PLACE_OF_EMPLOYMENT as occupation, PHONE as phone_home, DATE_CREATE as date, case SEX when 0 then 'Male' when 1 then 'Female' end AS sex, MAX_ID+id as pid, 3 as ref_providerID, 4 as facilityID, id as medreg_pid from patient where id<10
+
+===================================
+2lists:
+
+select e.reg_date as date, 'medical_problem' as type, left(d.name_long,254) as title, e.reg_date as begdate, e.end_date as enddate, concat('ICD10:',left(e.IcD10_name, locate('|',e.IcD10_name)-1)) as diagnosis, (MAX_ID+e.patient_id) as pid, 'yvusla' as user, patient_id as medreg_pid, e.id as medreg_eventid  
+from event as e left join diagnosis as d on d.id=e.diagnosis_id order by id
+==================================
+2form_encounter:
+
+select e.reg_date as date, d.name_long as reason, 'НПЦПМСД с.Зарубинці' as facility, 4 as facility_ID, (e.patient_id+MAX_PID) as pid, (e.id+MAX_ENCOUNTER) as encounter, 'normal' as sensitivity, 3 as provider_id, 3 as billing_facility, patient_id as medreg_pid, e.id as medreg_eventid  
+from event as e left join diagnosis as d on d.id=e.diagnosis_id order by id
+
+select e.reg_date as date, d.name_long as reason, 'НПЦПМСД с.Зарубинці' as facility, 4 as facility_ID, (e.patient_id+100) as pid, (e.id+3) as encounter, 'normal' as sensitivity, 3 as provider_id, 3 as billing_facility, patient_id as medreg_pid, e.id as medreg_eventid 
+from event as e left join diagnosis as d on d.id=e.diagnosis_id order by id
+====================================
+2forms:
+
+insert into forms (date, encounter, form_name, form_id, pid, user, groupname, authorized, formdir, medreg_pid, medreg_eventid) select date, encounter, 'New Patient Encounter' as form_name, id, pid, provider_id, 'Default' as groupname, 1 as authorized, 'newpatient' as formdir, medreg_pid, medreg_eventid  from form_encounter where encounter>MAX_ENCOUNTER  (3)
+====================================
+lists+encounter2issue_encounter:
+
+insert into issue_encounter (pid, list_id, encounter) select l.pid, l.id, e.encounter from lists as l inner join form_encounter as e on e.medreg_eventid=l.medreg_eventid and e.pid=l.pid where l.pid>100 ORDER BY `l`.`pid` ASC
+==================================== 
+2calendar (openemr_postcalendar_events):
+
+select 
+5 as pc_catid, 0 as pc_multiple, 3 as pc_aid, (100+e.patient_id) as pc_pid, 'Відвідування кабінету' as pc_title, IFNULL(v.VISIT_DATE, CAST(CONCAT(TO_CHAR(e.reg_date, 'YYYY-MM-DD'),' 09:00:00') AS DATETIME)) as pc_time, concat(d.name_short, v.note) as pc_hometext, 1 as pc_topic, 1 as pc_informant, IFNULL(CAST(v.VISIT_DATE AS DATE), e.reg_date) as pc_eventDate, 1800 as pc_duration, 0 as pc_recurrtype, 'a:6:{s:17:"event_repeat_freq";N;s:22:"event_repeat_freq_type";N;s:19:"event_repeat_on_num";s:1:"1";s:19:"event_repeat_on_day";s:1:"0";s:20:"event_repeat_on_freq";s:1:"0";s:6:"exdate";s:0:"";}' as pc_recurrspec, 
+IFNULL(CAST(v.VISIT_DATE AS TIME), CAST('09:00:00' AS TIME)) as pc_startTime, 
+IFNULL(CAST(v.VISIT_DATE AS TIME), CAST('09:30:00' AS TIME)) as pc_endTime, 'a:6:{s:14:"event_location";s:0:"";s:13:"event_street1";s:0:"";s:13:"event_street2";s:0:"";s:10:"event_city";s:0:"";s:11:"event_state";s:0:"";s:12:"event_postal";s:0:"";}' as pc_location, 1 as pc_eventstatus, 1 as pc_sharing, 4 as pc_facility, 3 as pc_billing_location, e.patient_id as pc_medreg_pid, e.id as pc_medreg_eventid   
+from event as e
+left join diagnosis as d on d.id=e.diagnosis_id  
+left join visit as v on e.id=v.event_id 
+======================================================
+2form_dictation:
+
+select p.date_create as date, id+849 as pid, 'yvusla' as user, 'Default' as groupname, 1 as authorized, 1 as activity, DESCRIPTION as dictation, '' as  additional_notes, id as medreg_pid from patient as p where DESCRIPTION>''
+
+select p.date_create as date, (id+MAX_PID) as pid, 'yvusla' as user, 'Default' as groupname, 1 as authorized, 1 as activity, DESCRIPTION as dictation, id as medreg_pid from patient as p where DESCRIPTION>''
+
+--------------------
+insert into forms (date, encounter, form_name, form_id, pid, user, groupname, authorized, deleted, formdir, medreg_pid, medreg_eventid) 
+select d.date, fe.min_enc, 'Speech Dictation' as form_name, d.id, d.pid, 'yvusla' as user, 'Default' as groupname, 1 as authorized, 0 as deleted, 'dictation' as formdir, d.medreg_pid, fe.min_medregenc  FROM `form_dictation` as d left join 
+(SELECT pid, min(medreg_pid), min(date) as min_date, min(encounter) as min_enc, min(medreg_eventid) as min_medregenc FROM `form_encounter` where pid>MAX_PID group by pid order by pid, date) as fe on d.pid=fe.pid where pid>MAX_PID order by d.pid
+----alternate---
+insert into forms (date, encounter, form_name, form_id, pid, user, groupname, authorized, deleted, formdir, medreg_pid, medreg_eventid) 
+select d.date, fe.min_enc, 'Speech Dictation' as form_name, d.id, d.pid, 'yvusla' as user, 'Default' as groupname, 1 as authorized, 0 as deleted, 'dictation' as formdir, d.medreg_pid, fe.min_medregenc  FROM `form_dictation` as d left join 
+(SELECT pid, min(medreg_pid), min(date) as min_date, min(encounter) as min_enc, min(medreg_eventid) as min_medregenc FROM `form_encounter` where medreg_pid>0 group by pid order by pid, date) as fe on d.pid=fe.pid where medreg_pid>0 order by d.pid
+
