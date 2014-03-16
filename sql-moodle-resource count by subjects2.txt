@@ -1,0 +1,136 @@
+SELECT concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,'">',c.fullname,'</a>') AS IDLink
+, c.id
+,( SELECT DISTINCT CONCAT(u.firstname,' ',u.lastname)
+  FROM prefix_role_assignments AS ra
+  JOIN prefix_user AS u ON ra.userid = u.id
+  JOIN prefix_context AS ctx ON ctx.id = ra.contextid
+  WHERE ra.roleid = 3 AND ctx.instanceid = c.id AND ctx.contextlevel = 50 LIMIT 1) AS Teacher, c.fullname, COUNT(c.id) AS Total
+,(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 12 AND cm.visible=1) AS QUIZs
+,(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 13 AND cm.visible=1) AS RESOURCEs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 22 AND cm.visible=1) AS FOLDERs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 26 AND cm.visible=1) AS URLs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 30 AND cm.visible=1) AS CHEKLISTs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 31 AND cm.visible=1) AS SCHEDULERs
+ 
+FROM `prefix_resource` AS r 
+JOIN `prefix_course` AS c ON c.id = r.course
+#WHERE TYPE= 'file' AND reference NOT LIKE 'http://%' 
+ 
+#WHERE 1=1
+#%%FILTER_YEARS:c.fullname%%
+#AND c.fullname LIKE '%2013%'
+ 
+GROUP BY course
+ORDER BY COUNT(c.id) DESC
+
+==============================
+
+
+SELECT concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,'">Link</a>') AS IDLink, c.id, c.fullname, 
+( SELECT DISTINCT CONCAT(u.firstname,' ',u.lastname)
+  FROM prefix_role_assignments AS ra
+  JOIN prefix_user AS u ON ra.userid = u.id
+  JOIN prefix_context AS ctx ON ctx.id = ra.contextid
+  WHERE ra.roleid = 3 AND ctx.instanceid = c.id AND ctx.contextlevel = 50 LIMIT 1) AS Teacher, 
+COUNT(c.id) AS Total, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 12 AND cm.visible=1) AS QUIZs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 13 AND cm.visible=1) AS RESOURCEs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 22 AND cm.visible=1) AS FOLDERs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 26 AND cm.visible=1) AS URLs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 30 AND cm.visible=1) AS CHEKLISTs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 31 AND cm.visible=1) AS SCHEDULERs
+ 
+FROM `prefix_resource` AS r 
+JOIN `prefix_course` AS c ON c.id = r.course
+#WHERE TYPE= 'file' AND reference NOT LIKE 'http://%' 
+ 
+#WHERE 1=1
+#%%FILTER_YEARS:c.fullname%%
+#AND c.fullname LIKE '%2013%'
+ 
+GROUP BY course
+ORDER BY COUNT(c.id) DESC
+
+
+===============================================================
+SELECT c.id, c.fullname, count(cs.id) 
+FROM mdl_course_sections AS cs   
+JOIN mdl_course as c ON c.id=cs.course 
+WHERE cs.visible=1 and length(cs.sequence)>0 #and length(cs.summary)>0 and cs.name is null
+GROUP BY c.id 
+order by c.id
+---------------------------------------------------
+SELECT concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,'>Link</a>') AS IDLink, c.id, c.fullname, 
+( SELECT DISTINCT CONCAT(u.firstname,' ',u.lastname)
+  FROM prefix_role_assignments AS ra
+  JOIN prefix_user AS u ON ra.userid = u.id
+  JOIN prefix_context AS ctx ON ctx.id = ra.contextid
+  WHERE ra.roleid = 3 AND ctx.instanceid = c.id AND ctx.contextlevel = 50 LIMIT 1) AS Teacher, 
+COUNT(cs.id) AS Sections, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 12 AND cm.visible=1) AS QUIZs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 13 AND cm.visible=1) AS RESOURCEs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 22 AND cm.visible=1) AS FOLDERs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 26 AND cm.visible=1) AS URLs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 30 AND cm.visible=1) AS CHEKLISTs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 31 AND cm.visible=1) AS SCHEDULERs
+FROM prefix_course_sections AS cs  
+JOIN prefix_course as c ON c.id=cs.course 
+WHERE cs.visible=1 and length(cs.sequence)>0
+GROUP BY c.id
+
+=============================================================================
+working!
+--------------------------------------------------------------------
+SELECT LEFT(strip_tags(mcc.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(mcc.name)))-1) as "Кафедра", c.id, c.fullname, concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,' ">Link</a>') AS IDLink,  
+COUNT(cs.id) AS Sections, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 12 AND cm.visible=1) AS QUIZs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 13 AND cm.visible=1) AS RESOURCEs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 22 AND cm.visible=1) AS FOLDERs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 26 AND cm.visible=1) AS URLs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 30 AND cm.visible=1) AS CHEKLISTs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 31 AND cm.visible=1) AS SCHEDULERs
+FROM prefix_course_sections AS cs  
+JOIN prefix_course as c ON c.id=cs.course 
+LEFT JOIN prefix_course_categories mcc ON c.category=mcc.id
+WHERE cs.visible=1 and length(cs.sequence)>0 and c.category<>0 and c.category<>45
+GROUP BY c.id
+ORDER BY mcc.id
+===============================================================
+working!
+calculee PDF resorce filel for given course
+----------------------
+SELECT * 
+FROM mdl_files f 
+JOIN mdl_context ctx ON f.contextid = ctx.id 
+JOIN mdl_course_modules cm ON ctx.instanceid=cm.id
+where cm.module=13 and cm.course=403 and f.filename like '%.pdf%'
+----------------------
+moodle report plugin notation
+----------------------
+SELECT * 
+FROM prefix_files f 
+JOIN prefix_context ctx ON f.contextid = ctx.id 
+JOIN prefix_course_modules cm ON ctx.instanceid=cm.id
+where cm.module=13 and cm.course=403 and f.filename like '%.pdf%' and cm.course = c.id
+=====================================================================
+working!
+--------------------------------------------------------------------
+SELECT LEFT(strip_tags(mcc.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(mcc.name)))-1) as "Кафедра", c.id, c.fullname, concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,' ">Link</a>') AS IDLink,  
+COUNT(cs.id) AS Sections, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 12 AND cm.visible=1) AS QUIZs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 13 AND cm.visible=1) AS RESOURCEs, 
+(SELECT count(*) 
+ FROM prefix_files f 
+ JOIN prefix_context ctx ON f.contextid = ctx.id 
+ JOIN prefix_course_modules cm ON ctx.instanceid=cm.id
+ WHERE cm.module=13 and f.filename like '%.pdf%' and cm.course = c.id) AS RESOURCEs_PDF, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 22 AND cm.visible=1) AS FOLDERs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 26 AND cm.visible=1) AS URLs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 30 AND cm.visible=1) AS CHEKLISTs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 31 AND cm.visible=1) AS SCHEDULERs
+FROM prefix_course_sections AS cs  
+JOIN prefix_course as c ON c.id=cs.course 
+LEFT JOIN prefix_course_categories mcc ON c.category=mcc.id
+WHERE cs.visible=1 and length(cs.sequence)>0 and c.category<>0 and c.category<>45
+GROUP BY c.id
+ORDER BY mcc.id
