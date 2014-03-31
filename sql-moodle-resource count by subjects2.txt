@@ -172,3 +172,85 @@ LEFT JOIN prefix_course_categories mcc ON c.category=mcc.id
 WHERE cs.visible=1 and length(cs.sequence)>0 and c.category<>0 and c.category<>45
 GROUP BY c.id
 ORDER BY mcc.id
+===========================================================================
+working! updated and fixed 20/03/2014/. Filter capabilities added
+--------------------------------------------------------------------
+
+SELECT LEFT(strip_tags(mcc.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(mcc.name)))-1) as "Кафедра", c.id, c.fullname, concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,' ">Link</a>') AS IDLink,  
+COUNT(cs.id) AS Sections, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 12 AND cm.visible=1) AS QUIZs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 13 AND cm.visible=1) AS RESOURCEs, 
+(SELECT count(*) 
+ FROM prefix_files f 
+ JOIN prefix_context ctx ON f.contextid = ctx.id 
+ JOIN prefix_course_modules cm ON ctx.instanceid=cm.id
+ WHERE cm.module=13 and f.filename like '%.pdf%' and cm.course = c.id) AS RESOURCEs_PDF, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 22 AND cm.visible=1) AS FOLDERs, 
+(SELECT count(*) 
+ FROM prefix_files f 
+ JOIN prefix_context ctx ON f.contextid = ctx.id 
+ JOIN prefix_course_modules cm ON ctx.instanceid=cm.id
+ WHERE cm.module=22 and f.filesize>0 and cm.course = c.id) AS FILES_in_FOLDERs, 
+(SELECT count(*) 
+ FROM prefix_files f 
+ JOIN prefix_context ctx ON f.contextid = ctx.id 
+ JOIN prefix_course_modules cm ON ctx.instanceid=cm.id
+ WHERE cm.module=22 and f.filename like '%.pdf%' and cm.course = c.id) AS PDF_in_FOLDERs, 
+(SELECT count(*) 
+ FROM prefix_files f 
+ JOIN prefix_context ctx ON f.contextid = ctx.id 
+ JOIN prefix_course_modules cm ON ctx.instanceid=cm.id
+ WHERE cm.module=22 and f.filename like '%.ppt%' and cm.course = c.id) AS PPT_in_FOLDERs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 26 AND cm.visible=1) AS URLs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 30 AND cm.visible=1) AS CHEKLISTs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 31 AND cm.visible=1) AS SCHEDULERs, 
+ Sections*2 as possible
+FROM prefix_course_sections AS cs  
+JOIN prefix_course as c ON c.id=cs.course 
+%%FILTER_CATEGORIES:c.category%%
+LEFT JOIN prefix_course_categories mcc ON c.category=mcc.id
+WHERE cs.visible=1 and length(cs.sequence)>0 and c.category<>0 and c.category<>45
+GROUP BY c.id
+ORDER BY mcc.id
+
+===================================================
+===========================================================================
+
+--------------------------------------------------------------------
+SELECT q1.depname as "Кафедра", q1.cid as "Код", q1.subj as "Предмет", q1.IDLink as "Лінк", q1.Sections as "Тем/занять", q1.QUIZs as "Тестів", q1.RESOURCEs as "Файлів", q1.RESOURCEs_PDF as "Файлів PDF", q1.FOLDERs as "Папок", q1.FILES_in_FOLDERs as "Файлів в папках", q1.PDF_in_FOLDERs "PDF в папках", q1.PPT_in_FOLDERs as "PPT в папках", q1.URLs as "Посилань", q1.CHEKLISTs as "Матрикулів", q1.SCHEDULERs as "Розкладів", ((q1.Sections*2-1)-q1.RESOURCEs) as "Бракує PDF" 
+From (
+SELECT LEFT(strip_tags(mcc.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(mcc.name)))-1) as depname, c.id as cid, c.fullname as subj, concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,' ">Link</a>') AS IDLink,  
+COUNT(cs.id) AS Sections, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 12 AND cm.visible=1) AS QUIZs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 13 AND cm.visible=1) AS RESOURCEs, 
+(SELECT count(*) 
+ FROM prefix_files f 
+ JOIN prefix_context ctx ON f.contextid = ctx.id 
+ JOIN prefix_course_modules cm ON ctx.instanceid=cm.id
+ WHERE cm.module=13 and f.filename like '%.pdf%' and cm.course = c.id) AS RESOURCEs_PDF, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 22 AND cm.visible=1) AS FOLDERs, 
+(SELECT count(*) 
+ FROM prefix_files f 
+ JOIN prefix_context ctx ON f.contextid = ctx.id 
+ JOIN prefix_course_modules cm ON ctx.instanceid=cm.id
+ WHERE cm.module=22 and f.filesize>0 and cm.course = c.id) AS FILES_in_FOLDERs, 
+(SELECT count(*) 
+ FROM prefix_files f 
+ JOIN prefix_context ctx ON f.contextid = ctx.id 
+ JOIN prefix_course_modules cm ON ctx.instanceid=cm.id
+ WHERE cm.module=22 and f.filename like '%.pdf%' and cm.course = c.id) AS PDF_in_FOLDERs, 
+(SELECT count(*) 
+ FROM prefix_files f 
+ JOIN prefix_context ctx ON f.contextid = ctx.id 
+ JOIN prefix_course_modules cm ON ctx.instanceid=cm.id
+ WHERE cm.module=22 and f.filename like '%.ppt%' and cm.course = c.id) AS PPT_in_FOLDERs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 26 AND cm.visible=1) AS URLs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 30 AND cm.visible=1) AS CHEKLISTs, 
+(SELECT COUNT(*) FROM prefix_course_modules AS cm WHERE cm.course = c.id AND cm.module= 31 AND cm.visible=1) AS SCHEDULERs 
+FROM prefix_course_sections AS cs  
+JOIN prefix_course as c ON c.id=cs.course 
+%%FILTER_CATEGORIES:c.category%%
+LEFT JOIN prefix_course_categories mcc ON c.category=mcc.id
+WHERE cs.visible=1 and length(cs.sequence)>0 and c.category<>0 and c.category<>45
+GROUP BY c.id
+) as q1
