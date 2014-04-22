@@ -1,0 +1,40 @@
+Compare the quarter average marks by two next years
+--------------------------------------------------------------------------
+SELECT q1.category "Код каф. -", LEFT(strip_tags(cc.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(cc.name)))-1) as "Кафедра", q1.2013_q1 AS "1кв. 2013", q2.2014_q1 AS "1кв. 2014" 
+from
+(
+SELECT c.category, round(avg(qg.grade),2) AS "2013_q1"
+FROM `mdl_quiz_grades` qg 
+INNER JOIN `mdl_quiz` q ON q.id=qg.quiz 
+INNER JOIN `mdl_course` c ON c.id=q.course 
+WHERE qg.timemodified between UNIX_TIMESTAMP('2013-01-01') and UNIX_TIMESTAMP('2013-03-31') GROUP BY c.category ORDER BY c.category) as q1
+INNER JOIN 
+(
+SELECT c.category, round(avg(qg.grade),2) AS "2014_q1"
+FROM `mdl_quiz_grades` qg 
+INNER JOIN `mdl_quiz` q ON q.id=qg.quiz 
+INNER JOIN `mdl_course` c ON c.id=q.course  
+WHERE qg.timemodified between UNIX_TIMESTAMP('2014-01-01') and UNIX_TIMESTAMP('2014-03-31') GROUP BY c.category ORDER BY c.category
+) as q2 ON q1.category = q2.category 
+LEFT JOIN `mdl_course_categories` cc ON cc.id=q1.category
+
+=========================================================================
+
+
+SELECT q1.category "Код каф. -", LEFT(strip_tags(cc.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(cc.name)))-1) as "Кафедра", q1.2013_q1 AS "1кв. 2013", q2.2014_q1 AS "1кв. 2014" 
+from
+(
+SELECT c.category, round(avg(qg.grade),2) AS "2013_q1"
+FROM `prefix_quiz_grades` qg 
+INNER JOIN `prefix_quiz` q ON q.id=qg.quiz 
+INNER JOIN `prefix_course` c ON c.id=q.course 
+WHERE qg.timemodified between UNIX_TIMESTAMP('2013-01-01') and UNIX_TIMESTAMP('2013-03-31') GROUP BY c.category ORDER BY c.category) as q1
+INNER JOIN 
+(
+SELECT c.category, round(avg(qg.grade),2) AS "2014_q1"
+FROM `prefix_quiz_grades` qg 
+INNER JOIN `prefix_quiz` q ON q.id=qg.quiz 
+INNER JOIN `prefix_course` c ON c.id=q.course  
+WHERE qg.timemodified between UNIX_TIMESTAMP('2014-01-01') and UNIX_TIMESTAMP('2014-03-31') GROUP BY c.category ORDER BY c.category
+) as q2 ON q1.category = q2.category 
+LEFT JOIN `prefix_course_categories` cc ON cc.id=q1.category
