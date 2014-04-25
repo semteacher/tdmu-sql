@@ -209,7 +209,7 @@ FROM prefix_course_sections AS cs
 JOIN prefix_course as c ON c.id=cs.course 
 %%FILTER_CATEGORIES:c.category%%
 LEFT JOIN prefix_course_categories mcc ON c.category=mcc.id
-WHERE cs.visible=1 and length(cs.sequence)>0 and c.category<>0 and c.category<>45
+WHERE c.visible=1 and length(cs.sequence)>0 and c.category<>0 and c.category<>45
 GROUP BY c.id
 ORDER BY mcc.id
 
@@ -251,6 +251,6 @@ FROM prefix_course_sections AS cs
 JOIN prefix_course as c ON c.id=cs.course 
 %%FILTER_CATEGORIES:c.category%%
 LEFT JOIN prefix_course_categories mcc ON c.category=mcc.id
-WHERE cs.visible=1 and length(cs.sequence)>0 and c.category<>0 and c.category<>45
+WHERE c.visible=1 and length(cs.sequence)>0 and c.category<>0 and c.category<>45
 GROUP BY c.id
 ) as q1
