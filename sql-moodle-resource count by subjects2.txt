@@ -217,7 +217,7 @@ ORDER BY mcc.id
 ===========================================================================
 
 --------------------------------------------------------------------
-SELECT q1.depname as "Кафедра", q1.cid as "Код", q1.subj as "Предмет", q1.IDLink as "Лінк", q1.Sections as "Тем/занять", q1.QUIZs as "Тестів", q1.RESOURCEs as "Файлів", q1.RESOURCEs_PDF as "Файлів PDF", q1.FOLDERs as "Папок", q1.FILES_in_FOLDERs as "Файлів в папках", q1.PDF_in_FOLDERs "PDF в папках", q1.PPT_in_FOLDERs as "PPT в папках", q1.URLs as "Посилань", q1.CHEKLISTs as "Матрикулів", q1.SCHEDULERs as "Розкладів", ((q1.Sections*2-1)-q1.RESOURCEs) as "Бракує PDF" 
+SELECT q1.depname as "Кафедра", q1.cid as "Код", q1.subj as "Предмет", q1.IDLink as "Лінк", q1.Sections as "Тем/занять", q1.QUIZs as "Тестів", q1.RESOURCEs as "Файлів", q1.RESOURCEs_PDF as "Файлів PDF", q1.FOLDERs as "Папок", q1.FILES_in_FOLDERs as "Файлів в папках", q1.PDF_in_FOLDERs "PDF в папках", q1.PPT_in_FOLDERs as "PPT в папках", q1.URLs as "Посилань", q1.CHEKLISTs as "Матрикулів", q1.SCHEDULERs as "Розкладів", ((q1.Sections-1)*2-q1.RESOURCEs) as "Бракує PDF" 
 From (
 SELECT LEFT(strip_tags(mcc.name),(POSITION((CHAR(0x28 USING utf8) COLLATE utf8_unicode_ci) IN strip_tags(mcc.name)))-1) as depname, c.id as cid, c.fullname as subj, concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,' ">Link</a>') AS IDLink,  
 COUNT(cs.id) AS Sections, 
@@ -251,6 +251,6 @@ FROM prefix_course_sections AS cs
 JOIN prefix_course as c ON c.id=cs.course 
 %%FILTER_CATEGORIES:c.category%%
 LEFT JOIN prefix_course_categories mcc ON c.category=mcc.id
-WHERE c.visible=1 and length(cs.sequence)>0 and c.category<>0 and c.category<>45
+WHERE cs.visible=1 and c.visible=1 and length(cs.sequence)>0 and c.category<>0 and c.category<>45
 GROUP BY c.id
 ) as q1
