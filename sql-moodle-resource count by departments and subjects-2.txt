@@ -1,0 +1,175 @@
+1. Calculate files count in the visible folder
+ 
+-----------------------------------------------------------------------
+SELECT cc.id, c.fullname, cm.course, mf.name, count(f.id) 
+ FROM mdl_files f 
+ JOIN mdl_context ctx ON f.contextid = ctx.id 
+ JOIN mdl_course_modules cm ON ctx.instanceid=cm.id
+ JOIN mdl_folder mf ON cm.instance = mf.id
+ JOIN mdl_course c ON mf.course = c.id 
+ JOIN `mdl_course_categories` cc ON cc.id=c.category
+ WHERE cm.module=22 and f.filesize>0 and cm.course = 1336 AND cm.visible=1
+GROUP BY mf.name 
+ -----------------------------------------------------------------------
+ below -ready
+ -----------------------------------------------------------------------
+SELECT mc.category, mcm.course, mfl.name, count(mf.id) 
+ FROM mdl_files mf 
+ JOIN mdl_context mctx ON mf.contextid = mctx.id 
+ JOIN mdl_course_modules mcm ON mctx.instanceid=mcm.id
+ JOIN mdl_folder mfl ON mcm.instance = mfl.id
+ JOIN mdl_course mc ON mfl.course = mc.id 
+ WHERE mcm.module=22 and mf.filesize>0 and mcm.course = 1336 AND mcm.visible=1
+GROUP BY mfl.name  
+ ==================================================
+ 
+ 
+ 2. Calculate visible resources (it are files too) count
+ 
+-----------------------------------------------------------------------
+SELECT mc.category, mcm.course, mr.name, count(mr.id) 
+FROM mdl_resource mr
+LEFT JOIN mdl_course_modules mcm ON (mr.id=mcm.instance AND mr.course=mcm.course)
+LEFT JOIN mdl_course mc ON mr.course = mc.id 
+WHERE mr.course = 1336 AND mcm.visible=1
+GROUP BY mr.name 
+ ==================================================
+ 3. Combine both previous queries
+-----------------------------------------------------------------------
+SELECT mc.category, mcm.course, mfl.name, count(mf.id) AS filecount
+ FROM mdl_files mf 
+ JOIN mdl_context mctx ON mf.contextid = mctx.id 
+ JOIN mdl_course_modules mcm ON mctx.instanceid=mcm.id
+ JOIN mdl_folder mfl ON mcm.instance = mfl.id
+ JOIN mdl_course mc ON mfl.course = mc.id 
+ WHERE mcm.module=22 and mf.filesize>0 and mcm.course = 1336 AND mcm.visible=1
+GROUP BY mfl.name
+UNION ALL
+SELECT mc.category, mcm.course, mr.name, count(mr.id) AS filecount
+FROM mdl_resource mr
+LEFT JOIN mdl_course_modules mcm ON (mr.id=mcm.instance AND mr.course=mcm.course)
+LEFT JOIN mdl_course mc ON mr.course = mc.id 
+WHERE mr.course = 1336 AND mcm.visible=1
+GROUP BY mr.name 
+ ==================================================
+4. Completed report 
+----------------------------------------------------------------------- 
+SELECT cc.id "Код каф.", cc.name "Кафедра", 
+(CASE 
+WHEN (locate('мед', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Медичний" 
+WHEN (locate('стомат', c.fullname)>0)AND(locate('укр', c.fullname) >0) THEN "Стоматологічний" 
+WHEN (locate('стом', c.fullname)>0)AND(locate('укр', c.fullname) >0) THEN "Стоматологічний" 
+WHEN (locate('фарм', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Фармацевтчний" 
+WHEN (locate('тпкз', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Фармацевтчний" 
+WHEN (locate('клін', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Фармацевтчний" 
+WHEN (locate('мед', c.fullname) >0)OR(locate('рус', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('стомат', c.fullname) >0)OR(locate('рус', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('фарм', c.fullname) >0)OR(locate('рус', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('stomat', c.fullname) >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('stom', c.fullname) >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('med', c.fullname) >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('farm', c.fullname) >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN ((c.fullname like '%nurs%') >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+END) AS faculty,
+concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,'">',c.fullname,'</a>') AS "Предмет", q1.name "Тип ресурсу", q1.filecount
+FROM 
+(SELECT mcm.course, mfl.name, count(mf.id) AS filecount
+ FROM mdl_files mf 
+ INNER JOIN mdl_context mctx ON mf.contextid = mctx.id 
+ INNER JOIN mdl_course_modules mcm ON mctx.instanceid=mcm.id
+ INNER JOIN mdl_folder mfl ON mcm.instance = mfl.id
+ WHERE mcm.module=22 and mf.filesize>0 AND mcm.visible=1
+GROUP BY mcm.course, mfl.name 
+UNION ALL
+SELECT mcm.course, mr.name, count(mr.id) AS filecount
+FROM mdl_resource mr
+INNER JOIN mdl_course_modules mcm ON (mr.id=mcm.instance AND mr.course=mcm.course)
+WHERE mcm.visible=1
+GROUP BY mcm.course, mr.name ) AS q1
+LEFT JOIN mdl_course c ON q1.course = c.id 
+LEFT JOIN mdl_course_categories cc ON cc.id=c.category
+WHERE c.visible=1 
+GROUP BY cc.id, q1.course, q1.name
+ORDER BY cc.id, faculty, q1.course, filecount DESC
+----------------------------------------------------------------------- 
+Using Moodle customizable report features: 
+----------------------------------------------------------------------- 
+
+SELECT cc.id "Код каф.", cc.name "Кафедра", 
+(CASE 
+WHEN (locate('мед', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Медичний" 
+WHEN (locate('стомат', c.fullname)>0)AND(locate('укр', c.fullname) >0) THEN "Стоматологічний" 
+WHEN (locate('стом', c.fullname)>0)AND(locate('укр', c.fullname) >0) THEN "Стоматологічний" 
+WHEN (locate('фарм', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Фармацевтчний" 
+WHEN (locate('тпкз', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Фармацевтчний" 
+WHEN (locate('клін', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Фармацевтчний" 
+WHEN (locate('мед', c.fullname) >0)OR(locate('рус', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('стомат', c.fullname) >0)OR(locate('рус', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('фарм', c.fullname) >0)OR(locate('рус', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('stomat', c.fullname) >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('stom', c.fullname) >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('med', c.fullname) >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('farm', c.fullname) >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN ((c.fullname like '%nurs%') >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+END) AS faculty,
+concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,'">',c.fullname,'</a>') AS "Предмет", q1.name "Тип ресурсу", sum(q1.filecount) tfilecount
+FROM 
+(SELECT mcm.course, mfl.name, count(mf.id) AS filecount
+ FROM prefix_files mf 
+ INNER JOIN prefix_context mctx ON mf.contextid = mctx.id 
+ INNER JOIN prefix_course_modules mcm ON mctx.instanceid=mcm.id
+ INNER JOIN prefix_folder mfl ON mcm.instance = mfl.id
+ WHERE mcm.module=22 and mf.filesize>0 AND mcm.visible=1
+GROUP BY mcm.course, mfl.name 
+UNION ALL
+SELECT mcm.course, mr.name, count(mr.id) AS filecount
+FROM prefix_resource mr
+INNER JOIN prefix_course_modules mcm ON (mr.id=mcm.instance AND mr.course=mcm.course)
+WHERE mcm.visible=1
+GROUP BY mcm.course, mr.name ) AS q1
+LEFT JOIN prefix_course c ON q1.course = c.id 
+LEFT JOIN prefix_course_categories cc ON cc.id=c.category
+WHERE c.visible=1 
+GROUP BY cc.id, q1.course, q1.name
+ORDER BY cc.id, faculty, q1.course, tfilecount DESC
+
+----------------------------------------------------------------------- 
+Using Moodle customizable report features: 
+WITHOUT ADDITIONAL GROUPING:
+----------------------------------------------------------------------- 
+SELECT cc.id "Код каф.", cc.name "Кафедра", 
+(CASE 
+WHEN (locate('мед', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Медичний" 
+WHEN (locate('стомат', c.fullname)>0)AND(locate('укр', c.fullname) >0) THEN "Стоматологічний" 
+WHEN (locate('стом', c.fullname)>0)AND(locate('укр', c.fullname) >0) THEN "Стоматологічний" 
+WHEN (locate('фарм', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Фармацевтчний" 
+WHEN (locate('тпкз', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Фармацевтчний" 
+WHEN (locate('клін', c.fullname) >0)AND(locate('укр', c.fullname) >0) THEN "Фармацевтчний" 
+WHEN (locate('мед', c.fullname) >0)OR(locate('рус', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('стомат', c.fullname) >0)OR(locate('рус', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('фарм', c.fullname) >0)OR(locate('рус', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('stomat', c.fullname) >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('stom', c.fullname) >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('med', c.fullname) >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN (locate('farm', c.fullname) >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+WHEN ((c.fullname like '%nurs%') >0)OR(locate('eng', c.fullname) >0) THEN "Іноземних студентів" 
+END) AS faculty,
+concat('<a target="_new" href="%%WWWROOT%%/course/view.php?id=',c.id,'">',c.fullname,'</a>') AS "Предмет", q1.name "Тип ресурсу", q1.filecount
+FROM 
+(SELECT mcm.course, mfl.name, count(mf.id) AS filecount
+ FROM prefix_files mf 
+ INNER JOIN prefix_context mctx ON mf.contextid = mctx.id 
+ INNER JOIN prefix_course_modules mcm ON mctx.instanceid=mcm.id
+ INNER JOIN prefix_folder mfl ON mcm.instance = mfl.id
+ WHERE mcm.module=22 and mf.filesize>0 AND mcm.visible=1
+GROUP BY mcm.course, mfl.name 
+UNION ALL
+SELECT mcm.course, mr.name, count(mr.id) AS filecount
+FROM prefix_resource mr
+INNER JOIN prefix_course_modules mcm ON (mr.id=mcm.instance AND mr.course=mcm.course)
+WHERE mcm.visible=1
+GROUP BY mcm.course, mr.name ) AS q1
+LEFT JOIN prefix_course c ON q1.course = c.id 
+LEFT JOIN prefix_course_categories cc ON cc.id=c.category
+WHERE c.visible=1 
+ORDER BY cc.id, faculty, q1.course, filecount DESC
