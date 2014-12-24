@@ -55,10 +55,10 @@ GROUP BY c.category, myear
 ORDER BY c.category, myear) as ttl
 
 =====================================================
-//UDF - remove HTML tags form sting:
+//UDF - remove HTML tags form sting: (Note: neeed setup collate to UTF8!!!!!)
 -----------------------------------------------------
 SET GLOBAL log_bin_trust_function_creators=1;
-DROP FUNCTION IF EXISTS looptest;
+DROP FUNCTION IF EXISTS strip_tags;
 DELIMITER $$
 CREATE FUNCTION strip_tags ($str TEXT) RETURNS TEXT
 BEGIN
