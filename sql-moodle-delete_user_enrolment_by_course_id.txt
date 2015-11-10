@@ -1,0 +1,29 @@
+//Applied when course was deleted and not accessible
+//select all enrolment for given course id
+select user2.firstname AS Firstname,
+user2.lastname AS Lastname,
+user2.email AS Email,
+user2.city AS City
+,(SELECT shortname FROM mdl_role WHERE id=en.roleid) AS ROLE
+,(SELECT name FROM mdl_role WHERE id=en.roleid) AS RoleName,
+en.courseid  
+FROM mdl_enrol AS en 
+JOIN mdl_user_enrolments AS ue ON ue.enrolid = en.id
+JOIN mdl_user AS user2 ON ue.userid = user2.id 
+where en.courseid=1231
+
+//select user_enrolment id
+select ue.id  
+FROM mdl_enrol AS en 
+JOIN mdl_user_enrolments AS ue ON ue.enrolid = en.id
+JOIN mdl_user AS user2 ON ue.userid = user2.id 
+where en.courseid=1231
+
+//breack mysql protection - delete user enrolment by course id
+DELETE FROM mdl_user_enrolments  
+WHERE id in (select x.id from (select ue.id  
+FROM mdl_enrol AS en 
+JOIN mdl_user_enrolments AS ue ON ue.enrolid = en.id
+JOIN mdl_user AS user2 ON ue.userid = user2.id 
+where en.courseid=1231) as x)
+
